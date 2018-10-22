@@ -93,6 +93,11 @@ bool Board::SetFen(const std::string &fen_string)
 
     bool result = true;
 
+    black_pawns_ = black_knights_  = black_bishops_ =
+            black_rooks_  = black_queens_ = black_king_ = 0;
+    white_pawns_ = white_knights_  = white_bishops_  =
+            white_rooks_ = white_queens_ = white_king_ = 0;
+
     for(auto&& symbol : fen_string)
     {
         if(symbol >= '1' && symbol <= '8')

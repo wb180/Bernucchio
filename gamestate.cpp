@@ -71,6 +71,8 @@ bool GameState::SetFen(const std::string &fen_string)
 
             if(result && ++position != fen_string.size() && fen_string.at(position) != ' ')
                 result = false;
+            else if(result && position >= fen_string.size())
+                return true;
 
             if(result)
             {
