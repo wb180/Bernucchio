@@ -23,4 +23,4 @@ HEADERS += \
     movelist.h
 
 DISTFILES += \
-    readme.rd
+    readme.md
