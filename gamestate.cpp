@@ -88,7 +88,7 @@ bool GameState::SetFen(const std::string &fen_string)
                 }
             }
 
-            if(result)
+            if(result && position != fen_string.size())
             {
                 while(result && ++position != fen_string.size())
                 {
@@ -101,6 +101,8 @@ bool GameState::SetFen(const std::string &fen_string)
                         result = false;
                 }
             }
+            else
+                result = false;
         }
         else
             result = false;

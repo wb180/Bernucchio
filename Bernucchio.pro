@@ -3,6 +3,8 @@ CONFIG += console c++14
 CONFIG -= app_bundle
 CONFIG -= qt
 
+DEFINES += BUILD_WITH_TESTS
+
 SOURCES += \
         main.cpp \
     board.cpp \
@@ -10,7 +12,8 @@ SOURCES += \
     moves.cpp \
     move.cpp \
     gamestate.cpp \
-    movelist.cpp
+    movelist.cpp \
+    tests/fen.cpp
 
 HEADERS += \
     bits_functions.h \
@@ -24,3 +27,5 @@ HEADERS += \
 
 DISTFILES += \
     readme.md
+
+unix|win32: LIBS += -lgtest

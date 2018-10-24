@@ -114,6 +114,12 @@ bool Board::SetFen(const std::string &fen_string)
                 result = false;
                 break;
             }
+
+            if(row >= kBoardSize)
+            {
+                result = false;
+                break;
+            }
         }
         else if(symbol == ' ')
             break;
