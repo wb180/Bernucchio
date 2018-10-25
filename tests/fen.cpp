@@ -54,6 +54,4 @@ TEST(FenTest, NotCorrect)
     EXPECT_FALSE(gs.SetFen(fen_4));
     EXPECT_FALSE(gs.SetFen(fen_5));
     EXPECT_FALSE(gs.SetFen(fen_6));
-    //EXPECT_FALSE(gs.SetFen(fen_7));
-    //EXPECT_FALSE(gs.SetFen(fen_8));
 };

@@ -3,8 +3,12 @@
 
 #include <string>
 
+class Moves;
+
 class Board
 {
+    friend class Moves;
+
 public:
     Board();
 
@@ -38,9 +42,9 @@ public:
     bool SetFen(const std::string &fen_string);
     std::string GetFen() const;
 
-private:
+    GetKing
 
-    //std::string from_move_to_uci(const uint16_t *bb);
+private:
 
     uint64_t whites_;
     uint64_t white_pawns_;
