@@ -13,7 +13,9 @@ SOURCES += \
     move.cpp \
     gamestate.cpp \
     movelist.cpp \
-    tests/fen.cpp
+    tests/fen.cpp \
+    hashlist.cpp \
+    magics.cpp
 
 HEADERS += \
     bits_functions.h \
@@ -23,7 +25,9 @@ HEADERS += \
     moves.h \
     move.h \
     gamestate.h \
-    movelist.h
+    movelist.h \
+    hashlist.h \
+    magics.hpp
 
 DISTFILES += \
     readme.md

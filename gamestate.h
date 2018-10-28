@@ -2,6 +2,7 @@
 #define GAMESTATE_H
 
 #include "board.h"
+#include "hashlist.h"
 #include "moves.h"
 
 #include <cstdint>
@@ -17,13 +18,11 @@ public:
 private:
     Board board_;
     Moves moves_;
+    HashList hashes_;
 
     bool active_side_;
 
-    bool castling_O_O_;
-    bool castling_O_O_O_;
-    bool castling_o_o_;
-    bool castling_o_o_o_;
+    std::size_t castlings_;
 
     uint64_t en_passant_;
     std::size_t fifty_moves_counter_;

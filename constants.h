@@ -5,8 +5,29 @@
 #include <cstdint>
 
 const std::size_t kBoardSize = 8;
+const std::size_t kBitBoardSize = 64;
 
-const std::array<uint64_t, 64> kWhitePawnsAttacks ={{
+const std::size_t kWhiteCastling_0_0   = 0X00000001;
+const std::size_t kWhiteCastling_0_0_0 = 0X00000002;
+const std::size_t kBlackCastling_0_0   = 0X00000004;
+const std::size_t kBlackCastling_0_0_0 = 0X00000008;
+
+const std::size_t kHashCastlingSize = 16;
+const std::size_t kHashEnPassantSize = 16;
+
+const std::size_t kHashEnPassantMagic = 0X1000F0606A5A400;
+const std::size_t kBitShift16 = 60;
+
+const std::size_t kFirstRowBitsStartBit = 56;
+const std::size_t kSecondRowBitsStartBit = 48;
+const std::size_t kThirdRowBitsStartBit = 40;
+const std::size_t kFourthRowBitsStartBit = 32;
+const std::size_t kFifthRowBitsStartBit = 24;
+const std::size_t kSixthRowBitsStartBit = 16;
+const std::size_t kSeventhRowBitsStartBit = 8;
+const std::size_t kEigthRowBitsStartBit = 0;
+
+const std::array<uint64_t, 64> kWhitePawnsAttacks = {{
       0x200, 0x500, 0xa00, 0x1400, 0x2800, 0x5000, 0xa000, 0x4000, 0x20000, 0x50000, 0xa0000, 0x140000, 0x280000,
       0x500000, 0xa00000, 0x400000, 0x2000000, 0x5000000, 0xa000000, 0x14000000, 0x28000000, 0x50000000, 0xa0000000,
       0x40000000, 0x200000000, 0x500000000, 0xa00000000, 0x1400000000, 0x2800000000, 0x5000000000, 0xa000000000,

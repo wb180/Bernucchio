@@ -3,18 +3,16 @@
 
 #include <string>
 
-class Moves;
-
 class Board
 {
     friend class Moves;
+    friend class HashList;
 
 public:
     Board();
 
     enum class BitboardType
     {
-        kWhites,
         kWhitePawns,
         kWhiteKnights,
         kWhiteBishops,
@@ -22,7 +20,6 @@ public:
         kWhiteQueens,
         kWhiteKing,
 
-        kBlacks,
         kBlackPawns,
         kBlackKnights,
         kBlackBishops,
@@ -30,19 +27,19 @@ public:
         kBlackQueens,
         kBlackKing,
 
+        KAllPieces,
+
+        kWhites,
+        kBlacks,
         kOccupied,
         kEmpty
     };
-
-    uint64_t get_bitboard(BitboardType type) const;
 
     char GetPieceSymbolAtPosition(std::size_t position) const;
     std::string GetPositionFromBitBoard(const uint64_t &bb) const;
 
     bool SetFen(const std::string &fen_string);
     std::string GetFen() const;
-
-    GetKing
 
 private:
 
@@ -51,7 +48,6 @@ private:
     uint64_t white_knights_;
     uint64_t white_bishops_;
     uint64_t white_rooks_;
-    uint64_t white_queens_;
     uint64_t white_king_;
 
     uint64_t blacks_;
@@ -59,7 +55,6 @@ private:
     uint64_t black_knights_;
     uint64_t black_bishops_;
     uint64_t black_rooks_;
-    uint64_t black_queens_;
     uint64_t black_king_;
 
     uint64_t occupied_;

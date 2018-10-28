@@ -8,7 +8,7 @@ Moves::Moves(Board *board) : board_(board)
 
 void Moves::GetForWhite(const bool &castling_O_O, const bool &castling_O_O_O, const uint64_t &en_passant)
 {
-    std::size_t king_position = get_lsb(board_->white_king_);
+    /*std::size_t king_position = get_lsb(board_->white_king_);
 
         uint64_t attack = king_attack_from(from);
 
@@ -158,5 +158,5 @@ void Moves::GetForWhite(const bool &castling_O_O, const bool &castling_O_O_O, co
             generate_king_moves(ml);
 
             sort_captures(ml);
-        }
+        }*/
 }

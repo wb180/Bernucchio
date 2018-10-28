@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-inline uint64_t get_bit_set(uint64_t i)
+inline uint64_t GetBitSet(std::size_t i)
 {
     return uint64_t(1) << i;
 }
@@ -20,12 +20,17 @@ const std::size_t index64[64] =
    13, 18,  8, 12,  7,  6,  5, 63
 };
 
-inline std::size_t get_lsb(uint64_t bb)
+inline std::size_t GetLSBPos(uint64_t bb)
 {
    return index64[((bb ^ (bb-1)) * 0x03f79d71b4cb0a89) >> 58];
 }
 
-inline std::size_t get_msb(uint64_t bb)
+inline uint64_t GetLSB(uint64_t bb)
+{
+   return bb & ~(bb-1);
+}
+
+inline std::size_t GetMSBPos(uint64_t bb)
 {
    bb |= bb >> 1;
    bb |= bb >> 2;
@@ -36,7 +41,7 @@ inline std::size_t get_msb(uint64_t bb)
    return index64[(bb * 0x03f79d71b4cb0a89) >> 58];
 }
 
-inline std::size_t bits_count(uint64_t bb)
+inline std::size_t GetBitsCount(uint64_t bb)
 {
     bb = bb - ((bb >> 1) & 0X5555555555555555);
     bb = (bb & 0X3333333333333333) + ((bb >> 2) & 0X3333333333333333);

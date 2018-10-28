@@ -2,19 +2,14 @@
 #include "constants.h"
 #include "gamestate.h"
 
-GameState::GameState() : moves_(&board_)
+GameState::GameState() : moves_(&board_), hashes_(&board_)
 {
 
 }
 
 bool GameState::SetFen(const std::string &fen_string)
 {
-    castling_O_O_ = false;
-    castling_O_O_O_ = false;
-    castling_o_o_ = false;
-    castling_o_o_o_ = false;
-
-    en_passant_ = 0;
+    castlings_ = en_passant_ = 0;
 
     fifty_moves_counter_ = 0;
     full_moves_counter_ = 0;
@@ -40,10 +35,10 @@ bool GameState::SetFen(const std::string &fen_string)
             {
                 switch(fen_string.at(position))
                 {
-                    case 'K': castling_O_O_ = true; break;
-                    case 'Q': castling_O_O_O_ = true; break;
-                    case 'k': castling_o_o_ = true; break;
-                    case 'q': castling_o_o_o_ = true; break;
+                    case 'K': castlings_ |= kWhiteCastling_0_0; break;
+                    case 'Q': castlings_ |= kWhiteCastling_0_0_0; break;
+                    case 'k': castlings_ |= kBlackCastling_0_0; break;
+                    case 'q': castlings_ |= kBlackCastling_0_0_0; break;
 
                     case '-': break;
                     default: result = false; break;
@@ -60,7 +55,7 @@ bool GameState::SetFen(const std::string &fen_string)
                     {
                         std::size_t column = static_cast<std::size_t>(fen_string.at(position)) - '1';
 
-                        en_passant_ = get_bit_set(kBoardSize * column + row);
+                        en_passant_ = GetBitSet(kBoardSize * column + row);
                     }
                     else
                         result = false;
@@ -117,13 +112,13 @@ std::string GameState::GetFen() const
     fen_string.append(1, ' ').append(1, active_side_ ? 'w' : 'b').append(1, ' ');
 
     std::string castling;
-    if(castling_O_O_)
+    if(castlings_ & kWhiteCastling_0_0)
         castling.append(1, 'K');
-    if(castling_O_O_O_)
+    if(castlings_ & kWhiteCastling_0_0_0)
         castling.append(1, 'Q');
-    if(castling_o_o_)
+    if(castlings_ & kBlackCastling_0_0)
         castling.append(1, 'k');
-    if(castling_o_o_o_)
+    if(castlings_ & kBlackCastling_0_0_0)
         castling.append(1, 'q');
 
     if(castling.empty())

@@ -1,7 +1,10 @@
 #include <iostream>
 
+#include "bits_functions.h"
 #include "gamestate.h"
 #include "logger.h"
+#include "magics.hpp"
+#include <numeric>
 
 #ifdef BUILD_WITH_TESTS
     #include <gtest/gtest.h>

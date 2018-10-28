@@ -11,79 +11,20 @@ Board::Board()
 
 }
 
-uint64_t Board::get_bitboard(Board::BitboardType type) const
-{
-    uint64_t bit_board = 0;
-
-    switch(type)
-    {
-    case BitboardType::kWhites:
-        bit_board = whites_;
-        break;
-    case BitboardType::kWhitePawns:
-        bit_board = white_pawns_;
-        break;
-    case BitboardType::kWhiteKnights:
-        bit_board = white_knights_;
-        break;
-    case BitboardType::kWhiteBishops:
-        bit_board = white_bishops_;
-        break;
-    case BitboardType::kWhiteRooks:
-        bit_board = white_rooks_;
-        break;
-    case BitboardType::kWhiteQueens:
-        bit_board = white_queens_;
-        break;
-    case BitboardType::kWhiteKing:
-        bit_board = white_king_;
-        break;
-    case BitboardType::kBlacks:
-        bit_board = blacks_;
-        break;
-    case BitboardType::kBlackPawns:
-        bit_board = black_pawns_;
-        break;
-    case BitboardType::kBlackKnights:
-        bit_board = black_knights_;
-        break;
-    case BitboardType::kBlackBishops:
-        bit_board = black_bishops_;
-        break;
-    case BitboardType::kBlackRooks:
-        bit_board = black_rooks_;
-        break;
-    case BitboardType::kBlackQueens:
-        bit_board = black_queens_;
-        break;
-    case BitboardType::kBlackKing:
-        bit_board = black_king_;
-        break;
-    case BitboardType::kOccupied:
-        bit_board = occupied_;
-        break;
-    case BitboardType::kEmpty:
-        bit_board = empty_;
-        break;
-    }
-
-    return bit_board;
-}
-
 char Board::GetPieceSymbolAtPosition(std::size_t position) const
 {
-    return (white_pawns_ & get_bit_set(position) ? 'P' :
-           (white_bishops_ & get_bit_set(position) ? 'B' :
-           (white_knights_ & get_bit_set(position) ? 'N' :
-           (white_rooks_ & get_bit_set(position) ? 'R' :
-           (white_queens_ & get_bit_set(position) ? 'Q' :
-           (white_king_ & get_bit_set(position) ? 'K' :
-           (black_pawns_ & get_bit_set(position) ? 'p' :
-           (black_bishops_ & get_bit_set(position) ? 'b' :
-           (black_knights_ & get_bit_set(position) ? 'n' :
-           (black_rooks_ & get_bit_set(position) ? 'r' :
-           (black_queens_ & get_bit_set(position) ? 'q' :
-           (black_king_ & get_bit_set(position) ? 'k' : 0))))))))))));
+    return (white_pawns_ & GetBitSet(position) ? 'P' :
+           (white_rooks_ & white_bishops_ & GetBitSet(position) ? 'Q' :
+           (white_bishops_ & GetBitSet(position) ? 'B' :
+           (white_knights_ & GetBitSet(position) ? 'N' :
+           (white_rooks_ & GetBitSet(position) ? 'R' :
+           (white_king_ & GetBitSet(position) ? 'K' :
+           (black_pawns_ & GetBitSet(position) ? 'p' :
+           (black_rooks_ & black_bishops_ & GetBitSet(position) ? 'q' :
+           (black_bishops_ & GetBitSet(position) ? 'b' :
+           (black_knights_ & GetBitSet(position) ? 'n' :
+           (black_rooks_ & GetBitSet(position) ? 'r' :
+           (black_king_ & GetBitSet(position) ? 'k' : 0))))))))))));
 }
 
 bool Board::SetFen(const std::string &fen_string)
@@ -94,9 +35,9 @@ bool Board::SetFen(const std::string &fen_string)
     bool result = true;
 
     black_pawns_ = black_knights_  = black_bishops_ =
-            black_rooks_  = black_queens_ = black_king_ = 0;
+            black_rooks_  = black_king_ = 0;
     white_pawns_ = white_knights_  = white_bishops_  =
-            white_rooks_ = white_queens_ = white_king_ = 0;
+            white_rooks_ = white_king_ = 0;
 
     for(auto&& symbol : fen_string)
     {
@@ -129,18 +70,20 @@ bool Board::SetFen(const std::string &fen_string)
 
             switch(symbol)
             {
-                case 'p': black_pawns_ |= get_bit_set(bit_number); break;
-                case 'n': black_knights_ |= get_bit_set(bit_number); break;
-                case 'b': black_bishops_ |= get_bit_set(bit_number); break;
-                case 'r': black_rooks_ |= get_bit_set(bit_number); break;
-                case 'q': black_queens_ |= get_bit_set(bit_number); break;
-                case 'k': black_king_ |= get_bit_set(bit_number); break;
-                case 'P': white_pawns_ |= get_bit_set(bit_number); break;
-                case 'N': white_knights_ |= get_bit_set(bit_number); break;
-                case 'B': white_bishops_ |= get_bit_set(bit_number); break;
-                case 'R': white_rooks_ |= get_bit_set(bit_number); break;
-                case 'Q': white_queens_ |= get_bit_set(bit_number); break;
-                case 'K': white_king_ |= get_bit_set(bit_number); break;
+                case 'p': black_pawns_ |= GetBitSet(bit_number); break;
+                case 'n': black_knights_ |= GetBitSet(bit_number); break;
+                case 'b': black_bishops_ |= GetBitSet(bit_number); break;
+                case 'r': black_rooks_ |= GetBitSet(bit_number); break;
+                case 'q': black_rooks_ |= GetBitSet(bit_number);
+                          black_bishops_ |= GetBitSet(bit_number); break;
+                case 'k': black_king_ |= GetBitSet(bit_number); break;
+                case 'P': white_pawns_ |= GetBitSet(bit_number); break;
+                case 'N': white_knights_ |= GetBitSet(bit_number); break;
+                case 'B': white_bishops_ |= GetBitSet(bit_number); break;
+                case 'R': white_rooks_ |= GetBitSet(bit_number); break;
+                case 'Q': white_rooks_ |= GetBitSet(bit_number);
+                          white_bishops_ |= GetBitSet(bit_number);break;
+                case 'K': white_king_ |= GetBitSet(bit_number); break;
                 default : result = false; break;
             }
 
@@ -153,8 +96,8 @@ bool Board::SetFen(const std::string &fen_string)
 
     if(result)
     {
-        whites_ = white_pawns_ | white_knights_ | white_bishops_ | white_rooks_ | white_queens_ | white_king_;
-        blacks_ = black_pawns_ | black_knights_ | black_bishops_ | black_rooks_ | black_queens_ | black_king_;
+        whites_ = white_pawns_ | white_knights_ | white_bishops_ | white_rooks_ | white_king_;
+        blacks_ = black_pawns_ | black_knights_ | black_bishops_ | black_rooks_ | black_king_;
         occupied_ = whites_ | blacks_;
         empty_ = ~occupied_;
     }
@@ -177,7 +120,7 @@ std::string Board::GetFen() const
     {
         bit_number = (kBoardSize - 1 - row) * kBoardSize + column;
 
-        if(get_bit_set(bit_number) & occupied_)
+        if(GetBitSet(bit_number) & occupied_)
         {
             if(empty_in_row)
                 fen_string.append(std::to_string(empty_in_row));
@@ -213,7 +156,7 @@ std::string Board::GetFen() const
 std::string Board::GetPositionFromBitBoard(const uint64_t &bb) const
 {
     std::string position;
-    std::size_t bit_number = get_lsb(bb);
+    std::size_t bit_number = GetLSBPos(bb);
 
     position.append(1, char('a' + bit_number % 8));
     position.append(1, char('1' + bit_number / 8));
