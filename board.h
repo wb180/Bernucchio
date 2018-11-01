@@ -11,30 +11,6 @@ class Board
 public:
     Board();
 
-    enum class BitboardType
-    {
-        kWhitePawns,
-        kWhiteKnights,
-        kWhiteBishops,
-        kWhiteRooks,
-        kWhiteQueens,
-        kWhiteKing,
-
-        kBlackPawns,
-        kBlackKnights,
-        kBlackBishops,
-        kBlackRooks,
-        kBlackQueens,
-        kBlackKing,
-
-        KAllPieces,
-
-        kWhites,
-        kBlacks,
-        kOccupied,
-        kEmpty
-    };
-
     char GetPieceSymbolAtPosition(std::size_t position) const;
     std::string GetPositionFromBitBoard(const uint64_t &bb) const;
 

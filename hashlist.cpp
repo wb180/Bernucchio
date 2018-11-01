@@ -39,12 +39,45 @@ void HashList::ComputeInitialHash(const uint64_t &en_passant, const std::size_t 
     }
     while(occupied);
 
-    hash ^= en_passant_hashes_[(en_passant * kHashEnPassantMagic) >> kBitShift16];
-    hash ^= castling_hashes_[castlings];
+    if(en_passant)
+        hash ^= en_passant_hashes_[(en_passant * kHashEnPassantMagic) >> kBitShift16];
+
+    if(castlings)
+        hash ^= castling_hashes_[castlings];
+
+    *current_hash_ = hash;
+    ++current_hash_;
+
+    en_passant_old_ = en_passant;
+    castlings_old_ = castlings;
 }
 
-void HashList::UpdateHash(const Move &move)
+void HashList::UpdateHash(const uint64_t &move)
 {
+    uint64_t hash = *current_hash_;
+
+    std::size_t from = GetBitSet(move & MoveMasks::kFrom);
+    std::size_t to = GetBitSet(move & MoveMasks::kTo);
+
+    std::size_t hash_type = GetHashType(from);
+
+    hash ^= pieces_hashes_[hash_type][from];
+    hash ^= pieces_hashes_[hash_type][to];
+
+    if((move & MoveMasks::kFlag) == MoveFlags::kEnPassant)
+    {
+        hash ^= en_passant_hashes_[(en_passant_old_ * kHashEnPassantMagic) >> kBitShift16];
+    }
+
+    if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
+    {
+
+    }
+
+    if((move & MoveMasks::kFlag) == MoveFlags::kCastling)
+    {
+        hash ^= castling_hashes_[castlings_old_];
+    }
 
 }
 
@@ -53,44 +86,44 @@ std::size_t HashList::GetHashType(std::size_t lsb) const
     uint64_t bit_board = GetBitSet(lsb);
 
     if(bit_board & board_->black_pawns_)
-        return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::kBlackPawns);
+        return kBlackPawns;
 
     if(bit_board & board_->black_bishops_)
     {
         if(bit_board & board_->black_rooks_)
-            return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::kBlackQueens);
+            return kBlackQueens;
         else
-            return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::kBlackBishops);
+            return kBlackBishops;
     }
 
     if(bit_board & board_->black_rooks_)
-        return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::kBlackRooks);
+        return kBlackRooks;
 
     if(bit_board & board_->black_knights_)
-        return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::kBlackKnights);
+        return kBlackKnights;
 
     if(bit_board & board_->black_king_)
-        return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::kBlackKing);
+        return kBlackKing;
 
     if(bit_board & board_->white_pawns_)
-        return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::kWhitePawns);
+        return kWhitePawns;
 
     if(bit_board & board_->white_bishops_)
     {
         if(bit_board & board_->white_rooks_)
-            return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::kWhiteQueens);
+            return kWhiteQueens;
         else
-            return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::kWhiteBishops);
+            return kWhiteBishops;
     }
 
     if(bit_board & board_->white_rooks_)
-        return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::kWhiteRooks);
+        return kWhiteRooks;
 
     if(bit_board & board_->white_knights_)
-        return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::kWhiteKnights);
+        return kWhiteKnights;
 
     if(bit_board & board_->white_king_)
-        return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::kWhiteKing);
+        return kWhiteKing;
 
-    return static_cast<std::underlying_type_t<Board::BitboardType> >(Board::BitboardType::KAllPieces);
+    return KAllPieces;
 }

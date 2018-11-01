@@ -7,10 +7,13 @@
 const std::size_t kBoardSize = 8;
 const std::size_t kBitBoardSize = 64;
 
-const std::size_t kWhiteCastling_0_0   = 0X00000001;
-const std::size_t kWhiteCastling_0_0_0 = 0X00000002;
-const std::size_t kBlackCastling_0_0   = 0X00000004;
-const std::size_t kBlackCastling_0_0_0 = 0X00000008;
+enum Castlings : std::size_t
+{
+    kWhiteCastling_0_0   = 1,
+    kWhiteCastling_0_0_0 = 1 << 1,
+    kBlackCastling_0_0   = 1 << 2,
+    kBlackCastling_0_0_0 = 1 << 3
+};
 
 const std::size_t kHashCastlingSize = 16;
 const std::size_t kHashEnPassantSize = 16;
@@ -18,14 +21,50 @@ const std::size_t kHashEnPassantSize = 16;
 const std::size_t kHashEnPassantMagic = 0X1000F0606A5A400;
 const std::size_t kBitShift16 = 60;
 
-const std::size_t kFirstRowBitsStartBit = 56;
-const std::size_t kSecondRowBitsStartBit = 48;
-const std::size_t kThirdRowBitsStartBit = 40;
-const std::size_t kFourthRowBitsStartBit = 32;
-const std::size_t kFifthRowBitsStartBit = 24;
-const std::size_t kSixthRowBitsStartBit = 16;
-const std::size_t kSeventhRowBitsStartBit = 8;
-const std::size_t kEigthRowBitsStartBit = 0;
+enum StartBits : std::size_t
+{
+    kFirstRowBitsStartBit   = kBoardSize *(kBoardSize - 1),
+    kSecondRowBitsStartBit  = kBoardSize *(kBoardSize - 2),
+    kThirdRowBitsStartBit   = kBoardSize *(kBoardSize - 3),
+    kFourthRowBitsStartBit  = kBoardSize *(kBoardSize - 4),
+    kFifthRowBitsStartBit   = kBoardSize *(kBoardSize - 5),
+    kSixthRowBitsStartBit   = kBoardSize *(kBoardSize - 6),
+    kSeventhRowBitsStartBit = kBoardSize *(kBoardSize - 7),
+    kEigthRowBitsStartBit   = kBoardSize *(kBoardSize - 8)
+};
+
+enum MoveMasks : std::size_t
+{
+    kFrom = 63,
+    kTo   = 63 << 6,
+    kPromote = 3 << 12,
+    kFlag = 3 << 14
+};
+
+enum MoveFlags : std::size_t
+{
+    kCastling = 1,
+    kEnPassant,
+    kPromotion
+};
+
+const std::size_t kWhitePawns = 0;
+const std::size_t kWhiteKnights = 1;
+const std::size_t kWhiteBishops = 2;
+const std::size_t kWhiteRooks = 3;
+const std::size_t kWhiteQueens = 4;
+const std::size_t kWhiteKing = 5;
+const std::size_t kBlackPawns = 6;
+const std::size_t kBlackKnights = 7;
+const std::size_t kBlackBishops = 8;
+const std::size_t kBlackRooks = 9;
+const std::size_t kBlackQueens = 10;
+const std::size_t kBlackKing = 11;
+const std::size_t KAllPieces = 12;
+
+const std::size_t kMoveCastling = 1;
+const std::size_t kMoveCapture  = 2;
+const std::size_t kMoveEnPassant = 3;
 
 const std::array<uint64_t, 64> kWhitePawnsAttacks = {{
       0x200, 0x500, 0xa00, 0x1400, 0x2800, 0x5000, 0xa000, 0x4000, 0x20000, 0x50000, 0xa0000, 0x140000, 0x280000,
