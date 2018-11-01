@@ -9,8 +9,17 @@ class Moves
 public:
     explicit Moves(Board *board);
 
-    void GetForWhite(const bool &castling_O_O, const bool &castling_O_O_O, const uint64_t &en_passant);
-    void GetForBlack(const bool &castling_o_o, const bool &castling_o_o_o, const uint64_t &en_passant);
+    void GetWhiteSingleCheckEvasions();
+    void GetWhiteDoubleCheckEvasions();
+    void GetWhiteCaptures();
+    void GetWhiteQuiet();
+    void GetWhiteChecks();
+
+    void GetWhiteKingAttacks();
+    void GetWhiteKingMoves();
+    void GetWhiteCastlings(const std::size_t &castling_rights);
+    void GetWhiteAttacks();
+    void GetWhiteMoves();
 
 private:
     Board *board_;

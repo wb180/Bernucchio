@@ -10,12 +10,13 @@ class MoveList
 public:
     MoveList();
 
-    Move *next_move();
+    std::size_t *GetNextMove();
+    void AddMoves(std::size_t from, uint64_t bit_board, std::size_t flag = 0, std::size_t promote = 0);
 
 private:
-    std::array<Move, 256> moves_;
-    Move *last_move_;
-    Move *current_move_;
+    std::array<std::size_t, 256> moves_;
+    std::size_t *last_move_;
+    std::size_t *current_move_;
 };
 
 #endif // MOVELIST_H

@@ -43,28 +43,47 @@ enum MoveMasks : std::size_t
 
 enum MoveFlags : std::size_t
 {
-    kCastling = 1,
-    kEnPassant,
-    kPromotion
+    kCastling = 1 << 14,
+    kEnPassant = 2 << 14,
+    kPromotion = 3 << 14
 };
 
-const std::size_t kWhitePawns = 0;
-const std::size_t kWhiteKnights = 1;
-const std::size_t kWhiteBishops = 2;
-const std::size_t kWhiteRooks = 3;
-const std::size_t kWhiteQueens = 4;
-const std::size_t kWhiteKing = 5;
-const std::size_t kBlackPawns = 6;
-const std::size_t kBlackKnights = 7;
-const std::size_t kBlackBishops = 8;
-const std::size_t kBlackRooks = 9;
-const std::size_t kBlackQueens = 10;
-const std::size_t kBlackKing = 11;
-const std::size_t KAllPieces = 12;
+enum PieceType : std::size_t
+{
+    kWhitePawns,
+    kWhiteKnights,
+    kWhiteBishops,
+    kWhiteRooks,
+    kWhiteQueens,
+    kWhiteKing,
+    kBlackPawns,
+    kBlackKnights,
+    kBlackBishops,
+    kBlackRooks,
+    kBlackQueens,
+    kBlackKing,
+    KAllPieces
+};
 
-const std::size_t kMoveCastling = 1;
-const std::size_t kMoveCapture  = 2;
-const std::size_t kMoveEnPassant = 3;
+enum Squares : std::size_t
+{
+    A1 = kFirstRowBitsStartBit, B1, C1, D1, E1, F1, G1, H1,
+    A2 = kSecondRowBitsStartBit, B2, C2, D2, E2, F2, G2, H2,
+    A3 = kThirdRowBitsStartBit, B3, C3, D3, E3, F3, G3, H3,
+    A4 = kFourthRowBitsStartBit, B4, C4, D4, E4, F4, G4, H4,
+    A5 = kFifthRowBitsStartBit, B5, C5, D5, E5, F5, G5, H5,
+    A6 = kSixthRowBitsStartBit, B6, C6, D6, E6, F6, G6, H6,
+    A7 = kSeventhRowBitsStartBit, B7, C7, D7, E7, F7, G7, H7,
+    A8 = kEigthRowBitsStartBit, B8, C8, D8, E8, F8, G8, H8
+};
+
+enum PromotionType : std::size_t
+{
+    kKnight,
+    kBishop,
+    kRook,
+    kQueen
+};
 
 const std::array<uint64_t, 64> kWhitePawnsAttacks = {{
       0x200, 0x500, 0xa00, 0x1400, 0x2800, 0x5000, 0xa000, 0x4000, 0x20000, 0x50000, 0xa0000, 0x140000, 0x280000,

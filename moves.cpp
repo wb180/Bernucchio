@@ -1,4 +1,5 @@
 #include "bits_functions.h"
+#include "constants.h"
 #include "moves.h"
 
 Moves::Moves(Board *board) : board_(board)
@@ -6,7 +7,79 @@ Moves::Moves(Board *board) : board_(board)
 
 }
 
-void Moves::GetForWhite(const bool &castling_O_O, const bool &castling_O_O_O, const uint64_t &en_passant)
+void Moves::GetWhiteDoubleCheckEvasions()
+{
+    GetWhiteKingAttacks();
+    GetWhiteKingMoves();
+}
+
+void Moves::GetWhiteKingAttacks()
+{
+    std::size_t king_position = GetLSBPos(board_->white_king_);
+    uint64_t king_moves = kKingMoves[king_position] & board_->empty_ & ~kKingMoves[GetLSBPos(board_->black_king_)];
+    move_list_.AddMoves(king_position, king_moves);
+}
+
+void Moves::GetWhiteKingMoves()
+{
+    std::size_t king_position = GetLSBPos(board_->white_king_);
+    uint64_t king_attacks = kKingMoves[king_position] & board_->blacks_ & ~kKingMoves[GetLSBPos(board_->black_king_)];
+    move_list_.AddMoves(king_position, king_attacks);
+}
+
+void Moves::GetWhiteCastlings(const std::size_t &castling_rights)
+{
+    if(castling_rights & Castlings::kWhiteCastling_0_0)
+        move_list_.AddMoves(Squares::E1, GetBitSet(Squares::G1));
+
+    if(castling_rights & Castlings::kWhiteCastling_0_0_0)
+        move_list_.AddMoves(Squares::E1, GetBitSet(Squares::C1));
+}
+
+void Moves::GetWhiteAttacks()
+{
+    uint64_t pieces = board_->white_knights_;
+    uint64_t from = 0;
+    uint64_t attacks = 0;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        attacks = kKnightMoves[from] & board_->blacks_;
+        move_list_.AddMoves(from, attacks);
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->white_bishops_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        attacks = kKnightMoves[from] & board_->blacks_;
+        move_list_.AddMoves(from, attacks);
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->white_rooks_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        attacks = kKnightMoves[from] & board_->blacks_;
+        move_list_.AddMoves(from, attacks);
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->white_pawns_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        pieces &= pieces - 1;
+    }
+}
+
+/*void Moves::GetForWhite(const std::size_t castling_rights, const uint64_t &en_passant)
 {
     /*std::size_t king_position = get_lsb(board_->white_king_);
 
@@ -159,4 +232,4 @@ void Moves::GetForWhite(const bool &castling_O_O, const bool &castling_O_O_O, co
 
             sort_captures(ml);
         }*/
-}
+//}

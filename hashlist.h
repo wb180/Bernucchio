@@ -13,13 +13,14 @@ public:
     explicit HashList(const Board *board);
 
     void ComputeInitialHash(const uint64_t &en_passant, const std::size_t &castlings);
-    void UpdateHash(const uint64_t &move);
+    void UpdateHash(const uint64_t &move, PieceType captured);
+    void UpdateHash();
 
 private:
-    std::size_t GetHashType(std::size_t lsb) const;
+    PieceType GetHashType(std::size_t lsb) const;
 
     const Board* board_;
-    std::array<std::array<uint64_t, kBitBoardSize>, KAllPieces> pieces_hashes_;
+    std::array<std::array<uint64_t, kBitBoardSize>, PieceType::KAllPieces> pieces_hashes_;
     std::array<uint64_t, kHashEnPassantSize> en_passant_hashes_;
     std::array<uint64_t, kHashCastlingSize> castling_hashes_;
 
