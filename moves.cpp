@@ -74,7 +74,12 @@ void Moves::GetWhiteAttacks()
 
     while(pieces)
     {
-        from = GetLSBPos(pieces);
+        attacks = (board_->white_pawns_ << kMoveLeft) & kEmptyRight & board_->blacks_;
+        move_list_.AddMoves(from, attacks);
+
+        attacks = (board_->white_pawns_ << kMoveRight) & kEmptyLeft & board_->blacks_;
+        move_list_.AddMoves(from, attacks);
+
         pieces &= pieces - 1;
     }
 }

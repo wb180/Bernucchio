@@ -77,12 +77,28 @@ enum Squares : std::size_t
     A8 = kEigthRowBitsStartBit, B8, C8, D8, E8, F8, G8, H8
 };
 
+const std::size_t kMoveLeft = 7;
+const std::size_t kMoveRight = 9;
+
+const uint64_t kEmptyLeft   = 0XFEFEFEFEFEFEFEFE;
+const uint64_t kEmptyRight  = 0X7F7F7F7F7F7F7F7F;
+const uint64_t kEmptyTop    = 0X00FFFFFFFFFFFFFF;
+const uint64_t kEmptyBottom = 0XFFFFFFFFFFFFFF00;
+
 enum PromotionType : std::size_t
 {
     kKnight,
     kBishop,
     kRook,
     kQueen
+};
+
+enum PawnMoveType : std::size_t
+{
+    kLeftAttack,
+    kRightAttack,
+    kDoublePush,
+    kPush
 };
 
 const std::array<uint64_t, 64> kWhitePawnsAttacks = {{
