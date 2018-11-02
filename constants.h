@@ -84,13 +84,15 @@ const uint64_t kEmptyLeft   = 0XFEFEFEFEFEFEFEFE;
 const uint64_t kEmptyRight  = 0X7F7F7F7F7F7F7F7F;
 const uint64_t kEmptyTop    = 0X00FFFFFFFFFFFFFF;
 const uint64_t kEmptyBottom = 0XFFFFFFFFFFFFFF00;
+const uint64_t kTopRow      = ~kEmptyTop;
+const uint64_t kBottomRow   = ~kEmptyBottom;
 
 enum PromotionType : std::size_t
 {
-    kKnight,
-    kBishop,
+    kQueen,
     kRook,
-    kQueen
+    kBishop,
+    kKnight
 };
 
 enum PawnMoveType : std::size_t

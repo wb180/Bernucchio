@@ -75,10 +75,12 @@ void Moves::GetWhiteAttacks()
     while(pieces)
     {
         attacks = (board_->white_pawns_ << kMoveLeft) & kEmptyRight & board_->blacks_;
-        move_list_.AddMoves(from, attacks);
+        move_list_.AddPawnMoves(true, attacks & kEmptyBottom, PawnMoveType::kLeftAttack);
+        move_list_.AddPawnPromotions(true, attacks & kBottomRow, PawnMoveType::kLeftAttack);
 
         attacks = (board_->white_pawns_ << kMoveRight) & kEmptyLeft & board_->blacks_;
-        move_list_.AddMoves(from, attacks);
+        move_list_.AddPawnMoves(true, attacks & kEmptyBottom, PawnMoveType::kRightAttack);
+        move_list_.AddPawnPromotions(true, attacks & kBottomRow, PawnMoveType::kRightAttack);
 
         pieces &= pieces - 1;
     }
