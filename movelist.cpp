@@ -2,17 +2,19 @@
 #include "constants.h"
 #include "movelist.h"
 
+#include "logger.h"
+
 MoveList::MoveList()
 {
-
+    current_move_ = last_move_ = &moves_[0];
 }
 
 void MoveList::AddMoves(std::size_t from, uint64_t bit_board)
 {
     while(bit_board)
     {
-        *current_move_ = from | (GetLSBPos(bit_board) << 6);
-        ++current_move_;
+        *last_move_ = from | (GetLSBPos(bit_board) << 6);
+        ++last_move_;
         bit_board &= bit_board - 1;
     }
 }
@@ -34,11 +36,13 @@ void MoveList::AddPawnMoves(bool side, uint64_t bit_board, PawnMoveType move_typ
                 break;
 
             case PawnMoveType::kRightAttack:
-                from = to - kMoveLeft;
+            case PawnMoveType::kEnPassantRight:
+                from = to - kMoveRight;
                 break;
 
             case PawnMoveType::kLeftAttack:
-                from = to - kMoveRight;
+            case PawnMoveType::kEnPassantLeft:
+                from = to - kMoveLeft;
                 break;
 
             case PawnMoveType::kDoublePush:
@@ -46,8 +50,12 @@ void MoveList::AddPawnMoves(bool side, uint64_t bit_board, PawnMoveType move_typ
                 break;
             }
 
-            *current_move_ = from | (to << 6);
-            ++current_move_;
+            *last_move_ = from | (to << 6);
+
+            if(move_type == PawnMoveType::kEnPassantLeft || move_type == PawnMoveType::kEnPassantRight)
+                *last_move_ |= MoveFlags::kEnPassant;
+
+            ++last_move_;
             bit_board &= bit_board - 1;
         }
     }
@@ -64,10 +72,12 @@ void MoveList::AddPawnMoves(bool side, uint64_t bit_board, PawnMoveType move_typ
                 break;
 
             case PawnMoveType::kRightAttack:
+            case PawnMoveType::kEnPassantRight:
                 from = to + kMoveLeft;
                 break;
 
             case PawnMoveType::kLeftAttack:
+            case PawnMoveType::kEnPassantLeft:
                 from = to + kMoveRight;
                 break;
 
@@ -76,8 +86,12 @@ void MoveList::AddPawnMoves(bool side, uint64_t bit_board, PawnMoveType move_typ
                 break;
             }
 
-            *current_move_ = from | (to << 6);
-            ++current_move_;
+            *last_move_ = from | (to << 6);
+
+            if(move_type == PawnMoveType::kEnPassantLeft || move_type == PawnMoveType::kEnPassantRight)
+                *last_move_ |= MoveFlags::kEnPassant;
+
+            ++last_move_;
             bit_board &= bit_board - 1;
         }
     }
@@ -85,7 +99,7 @@ void MoveList::AddPawnMoves(bool side, uint64_t bit_board, PawnMoveType move_typ
 
 void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType move_type)
 {
-    uint64_t to, from;
+    uint64_t to, from = 0;
 
     if(side)
     {
@@ -110,12 +124,15 @@ void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType mov
             case PawnMoveType::kDoublePush:
                 from = to - 2 * kBoardSize;
                 break;
+
+            default:
+                break;
             }
 
             for(std::size_t promote_to = PromotionType::kQueen; promote_to <= PromotionType::kBishop; ++promote_to)
             {
-                *current_move_ = from | (to << 6) | (MoveFlags::kPromotion << 12) | (promote_to << 14);
-                ++current_move_;
+                *last_move_ = from | (to << 6) | (MoveFlags::kPromotion << 12) | (promote_to << 14);
+                ++last_move_;
             }
 
             bit_board &= bit_board - 1;
@@ -144,17 +161,31 @@ void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType mov
             case PawnMoveType::kDoublePush:
                 from = to + 2 * kBoardSize;
                 break;
+
+            default:
+                break;
             }
 
             for(std::size_t promote_to = PromotionType::kQueen; promote_to <= PromotionType::kBishop; ++promote_to)
             {
-                *current_move_ = from | (to << 6) | (MoveFlags::kPromotion << 12) | (promote_to << 14);
-                ++current_move_;
+                *last_move_ = from | (to << 6) | (MoveFlags::kPromotion << 12) | (promote_to << 14);
+                ++last_move_;
             }
 
             bit_board &= bit_board - 1;
         }
     }
+}
+
+void MoveList::addMove(std::size_t from, std::size_t to, MoveFlags flag)
+{
+    *last_move_ = from | (to << 6) | (flag << 12);
+    ++last_move_;
+}
+
+void MoveList::Reset()
+{
+    current_move_ = &moves_[0];
 }
 
 std::size_t *MoveList::GetNextMove()

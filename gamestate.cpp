@@ -1,8 +1,9 @@
 #include "bits_functions.h"
 #include "constants.h"
 #include "gamestate.h"
+#include "logger.h"
 
-GameState::GameState() : moves_(&board_), hashes_(&board_)
+GameState::GameState() : moves_(&board_, &en_passant_, &castlings_, &active_side_), hashes_(&board_)
 {
 
 }
@@ -22,9 +23,9 @@ bool GameState::SetFen(const std::string &fen_string)
         if(position != std::string::npos && ++position != fen_string.size())
         {
             if(fen_string.at(position) == 'w')
-                active_side_ = true;
+                active_side_ = Side::kWhite;
             else if(fen_string.at(position) == 'b')
-                active_side_ = false;
+                active_side_ = Side::kBlack;
             else
                 result = false;
 
@@ -102,6 +103,20 @@ bool GameState::SetFen(const std::string &fen_string)
         else
             result = false;
     }
+
+    if(active_side_ == Side::kWhite)
+    {
+        moves_.GetWhiteMoves();
+        moves_.GetWhiteAttacksAndPromotions();
+    }
+    else
+    {
+        moves_.GetBlackMoves();
+        moves_.GetBlackAttacksAndPromotions();
+    }
+
+    Logger lg;
+    lg << moves_.move_list_;
 
     return result;
 }

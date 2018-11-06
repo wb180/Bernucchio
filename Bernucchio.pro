@@ -3,14 +3,13 @@ CONFIG += console c++14
 CONFIG -= app_bundle
 CONFIG -= qt
 
-DEFINES += BUILD_WITH_TESTS
+#DEFINES += BUILD_WITH_TESTS
 
 SOURCES += \
         main.cpp \
     board.cpp \
     logger.cpp \
     moves.cpp \
-    move.cpp \
     gamestate.cpp \
     movelist.cpp \
     tests/fen.cpp \
@@ -23,11 +22,11 @@ HEADERS += \
     logger.h \
     constants.h \
     moves.h \
-    move.h \
     gamestate.h \
     movelist.h \
     hashlist.h \
-    magics.hpp
+    magics.hpp \
+    moveinfo.h
 
 DISTFILES += \
     readme.md

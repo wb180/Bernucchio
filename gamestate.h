@@ -15,12 +15,18 @@ public:
     bool SetFen(const std::string &fen_string);
     std::string GetFen() const;
 
+    bool MakeMove(std::size_t *move);
+    bool UnmakeMove(std::size_t move = 0);
+
 private:
     Board board_;
     Moves moves_;
     HashList hashes_;
 
-    bool active_side_;
+    std::array<MoveInfo, 512> move_infos;
+    MoveInfo *last_move_;
+
+    Side active_side_;
 
     std::size_t castlings_;
 

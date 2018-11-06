@@ -49,4 +49,21 @@ inline std::size_t GetBitsCount(uint64_t bb)
     return (bb * 0X101010101010101) >> 56;
 }
 
+inline uint64_t GetBitMaskNextPermutation(uint64_t permutation, uint64_t mask)
+{
+    uint64_t m = 1;
+
+    while(permutation & m || (~permutation & m & ~mask))
+    {
+        if(permutation & m & mask)
+            permutation ^= m;
+
+        m <<= 1;
+    }
+
+    permutation ^= m;
+
+    return permutation;
+}
+
 #endif // BITS_FUNCTIONS_H

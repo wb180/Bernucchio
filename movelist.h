@@ -2,7 +2,7 @@
 #define MOVELIST_H
 
 #include "constants.h"
-#include "move.h"
+#include "moveinfo.h"
 
 #include <array>
 
@@ -15,6 +15,8 @@ public:
     void AddMoves(std::size_t from, uint64_t bit_board);
     void AddPawnMoves(bool side, uint64_t bit_board, PawnMoveType move_type);
     void AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType move_type);
+    void addMove(std::size_t from, std::size_t to, MoveFlags flag);
+    void Reset();
 
 private:
     std::array<std::size_t, 256> moves_;

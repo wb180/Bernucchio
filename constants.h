@@ -65,7 +65,7 @@ enum PieceType : std::size_t
     KAllPieces
 };
 
-enum Squares : std::size_t
+enum Squares : const std::size_t
 {
     A1 = kFirstRowBitsStartBit, B1, C1, D1, E1, F1, G1, H1,
     A2 = kSecondRowBitsStartBit, B2, C2, D2, E2, F2, G2, H2,
@@ -79,6 +79,9 @@ enum Squares : std::size_t
 
 const std::size_t kMoveLeft = 7;
 const std::size_t kMoveRight = 9;
+const std::size_t kMoveForward = 8;
+const std::size_t kMoveForwardTwo = 16;
+
 
 const uint64_t kEmptyLeft   = 0XFEFEFEFEFEFEFEFE;
 const uint64_t kEmptyRight  = 0X7F7F7F7F7F7F7F7F;
@@ -100,8 +103,71 @@ enum PawnMoveType : std::size_t
     kLeftAttack,
     kRightAttack,
     kDoublePush,
-    kPush
+    kPush,
+    kEnPassantLeft,
+    kEnPassantRight,
 };
+
+enum FieldBitboard : std::size_t
+{
+    kA1 = 1 << 0,
+    kB1 = 1 << 1,
+    kC1 = 1 << 2,
+    kD1 = 1 << 3,
+    kE1 = 1 << 4,
+    kF1 = 1 << 5,
+    kG1 = 1 << 6,
+    kH1 = 1 << 7,
+    kA2 = 1 << 8,
+    kB2 = 1 << 9,
+    kC2 = 1 << 10,
+    kD2 = 1 << 11,
+    kE2 = 1 << 12,
+    kF2 = 1 << 13,
+    kG2 = 1 << 14,
+    kH2 = 1 << 15,
+    kA7 = 1UL << 48,
+    kB7 = 1UL << 49,
+    kC7 = 1UL << 50,
+    kD7 = 1UL << 51,
+    kE7 = 1UL << 52,
+    kF7 = 1UL << 53,
+    kG7 = 1UL << 54,
+    kH7 = 1UL << 55,
+    kA8 = 1UL << 56,
+    kB8 = 1UL << 57,
+    kC8 = 1UL << 58,
+    kD8 = 1UL << 59,
+    kE8 = 1UL << 60,
+    kF8 = 1UL << 61,
+    kG8 = 1UL << 62,
+    kH8 = 1UL << 63
+};
+
+enum Side : bool
+{
+    kWhite = true,
+    kBlack = false
+};
+
+const uint64_t kF1G1   = FieldBitboard::kF1 | FieldBitboard::kG1;
+const uint64_t kB1C1D1 = FieldBitboard::kB1 | FieldBitboard::kC1 | FieldBitboard::kD1;
+const uint64_t kB2C2 = FieldBitboard::kB2 | FieldBitboard::kC2;
+const uint64_t kG2H2 = FieldBitboard::kG2 | FieldBitboard::kH2;
+
+const uint64_t kF8G8   = FieldBitboard::kF8 | FieldBitboard::kG8;
+const uint64_t kB8C8D8 = FieldBitboard::kB8 | FieldBitboard::kC8 | FieldBitboard::kD8;
+const uint64_t kB7C7 = FieldBitboard::kB7 | FieldBitboard::kC7;
+const uint64_t kG7H7 = FieldBitboard::kG7 | FieldBitboard::kH7;
+
+const uint64_t kEightRow   = 0xFF00000000000000;
+const uint64_t kSeventhRow = 0x00FF000000000000;
+const uint64_t kSixthRow   = 0x0000FF0000000000;
+const uint64_t kFifthRow   = 0x000000FF00000000;
+const uint64_t kFourthRow  = 0x00000000FF000000;
+const uint64_t kThirdRow   = 0x0000000000FF0000;
+const uint64_t kSecondRow  = 0x000000000000FF00;
+const uint64_t kFirstRow   = 0x00000000000000FF;
 
 const std::array<uint64_t, 64> kWhitePawnsAttacks = {{
       0x200, 0x500, 0xa00, 0x1400, 0x2800, 0x5000, 0xa000, 0x4000, 0x20000, 0x50000, 0xa0000, 0x140000, 0x280000,

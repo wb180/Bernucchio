@@ -1,16 +1,17 @@
 #include "bits_functions.h"
 #include "constants.h"
+#include "logger.h"
 #include "moves.h"
 
-Moves::Moves(Board *board) : board_(board)
+#include <iostream>
+
+static std::array<std::array<uint64_t, 512>, kBitBoardSize> bishop_moves;
+static std::array<std::array<uint64_t, 4096>, kBitBoardSize> rook_moves;
+
+Moves::Moves(Board *board, uint64_t *en_passant, std::size_t *castling_rights, Side *side) : board_(board), en_passant_(en_passant),
+    castling_rights_(castling_rights), active_side_(side)
 {
 
-}
-
-void Moves::GetWhiteDoubleCheckEvasions()
-{
-    GetWhiteKingAttacks();
-    GetWhiteKingMoves();
 }
 
 void Moves::GetWhiteKingAttacks()
@@ -27,16 +28,7 @@ void Moves::GetWhiteKingMoves()
     move_list_.AddMoves(king_position, king_attacks);
 }
 
-void Moves::GetWhiteCastlings(const std::size_t &castling_rights)
-{
-    if(castling_rights & Castlings::kWhiteCastling_0_0)
-        move_list_.AddMoves(Squares::E1, GetBitSet(Squares::G1));
-
-    if(castling_rights & Castlings::kWhiteCastling_0_0_0)
-        move_list_.AddMoves(Squares::E1, GetBitSet(Squares::C1));
-}
-
-void Moves::GetWhiteAttacks()
+void Moves::GetWhiteAttacksAndPromotions()
 {
     uint64_t pieces = board_->white_knights_;
     uint64_t from = 0;
@@ -55,7 +47,7 @@ void Moves::GetWhiteAttacks()
     while(pieces)
     {
         from = GetLSBPos(pieces);
-        attacks = kKnightMoves[from] & board_->blacks_;
+        attacks = bishop_moves[from][(((kBishopMasks[from] & board_->occupied_) * kBishopMagics[from]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[from])))] & board_->blacks_;
         move_list_.AddMoves(from, attacks);
         pieces &= pieces - 1;
     }
@@ -65,178 +57,951 @@ void Moves::GetWhiteAttacks()
     while(pieces)
     {
         from = GetLSBPos(pieces);
-        attacks = kKnightMoves[from] & board_->blacks_;
+        attacks = rook_moves[from][((kRookMasks[from] & board_->occupied_) * kRookMagics[from]) >> (kBitBoardSize - GetBitsCount(kRookMasks[from]))] & board_->blacks_;
         move_list_.AddMoves(from, attacks);
         pieces &= pieces - 1;
     }
 
-    pieces = board_->white_pawns_;
+    attacks = (board_->white_pawns_ << kMoveLeft) & kEmptyRight & board_->blacks_;
+    move_list_.AddPawnMoves(Side::kWhite, attacks & kEmptyBottom, PawnMoveType::kLeftAttack);
+    move_list_.AddPawnPromotions(Side::kWhite, attacks & kBottomRow, PawnMoveType::kLeftAttack);
+
+    attacks = (board_->white_pawns_ << kMoveRight) & kEmptyLeft & board_->blacks_;
+    move_list_.AddPawnMoves(Side::kWhite, attacks & kEmptyBottom, PawnMoveType::kRightAttack);
+    move_list_.AddPawnPromotions(Side::kWhite, attacks & kBottomRow, PawnMoveType::kRightAttack);
+
+    attacks = (board_->white_pawns_ << kMoveForward) & board_->empty_;
+    move_list_.AddPawnPromotions(Side::kWhite, attacks & kBottomRow, PawnMoveType::kPush);
+
+    if(*en_passant_)
+    {
+        move_list_.AddPawnMoves(Side::kWhite, (board_->white_pawns_ << kMoveRight) & kEmptyLeft & *en_passant_, PawnMoveType::kEnPassantRight);
+        move_list_.AddPawnMoves(Side::kWhite, (board_->white_pawns_ << kMoveLeft) & kEmptyRight & *en_passant_, PawnMoveType::kEnPassantLeft);
+    }
+
+    GetWhiteKingAttacks();
+}
+
+void Moves::GetWhiteMoves()
+{
+    uint64_t pieces = board_->white_knights_;
+    uint64_t from = 0;
+    uint64_t moves = 0;
 
     while(pieces)
     {
-        attacks = (board_->white_pawns_ << kMoveLeft) & kEmptyRight & board_->blacks_;
-        move_list_.AddPawnMoves(true, attacks & kEmptyBottom, PawnMoveType::kLeftAttack);
-        move_list_.AddPawnPromotions(true, attacks & kBottomRow, PawnMoveType::kLeftAttack);
-
-        attacks = (board_->white_pawns_ << kMoveRight) & kEmptyLeft & board_->blacks_;
-        move_list_.AddPawnMoves(true, attacks & kEmptyBottom, PawnMoveType::kRightAttack);
-        move_list_.AddPawnPromotions(true, attacks & kBottomRow, PawnMoveType::kRightAttack);
-
+        from = GetLSBPos(pieces);
+        moves = kKnightMoves[from] & board_->empty_;
+        move_list_.AddMoves(from, moves);
         pieces &= pieces - 1;
     }
+
+    pieces = board_->white_bishops_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        moves = bishop_moves[from][(((kBishopMasks[from] & board_->occupied_) * kBishopMagics[from]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[from])))] & board_->empty_;
+        move_list_.AddMoves(from, moves);
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->white_rooks_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        moves = rook_moves[from][(((kRookMasks[from] & board_->occupied_) * kRookMagics[from]) >> (kBitBoardSize - GetBitsCount(kRookMasks[from])))] & board_->empty_;
+        move_list_.AddMoves(from, moves);
+        pieces &= pieces - 1;
+    }
+
+    moves = ((board_->white_pawns_ & kSecondRow ) << kMoveForwardTwo) & board_->empty_;
+    move_list_.AddPawnMoves(Side::kWhite, moves, PawnMoveType::kDoublePush);
+
+    moves = (board_->white_pawns_ << kMoveForward) & board_->empty_;
+    move_list_.AddPawnMoves(Side::kWhite, moves & kEmptyBottom, PawnMoveType::kPush);
+
+    if((*castling_rights_ & Castlings::kWhiteCastling_0_0) && !(kF1G1 & board_->occupied_) && !(kG2H2 & board_->black_king_) )
+    {
+        move_list_.addMove(Squares::E1, Squares::G1, MoveFlags::kCastling );
+    }
+
+    if((*castling_rights_ & Castlings::kWhiteCastling_0_0_0) && !(kB1C1D1 & board_->occupied_) && !(kB2C2 & board_->black_king_) )
+    {
+        move_list_.addMove(Squares::E1, Squares::C1, MoveFlags::kCastling );
+    }
+
+    GetWhiteKingMoves();
 }
 
-/*void Moves::GetForWhite(const std::size_t castling_rights, const uint64_t &en_passant)
+void Moves::GetBlackKingAttacks()
 {
-    /*std::size_t king_position = get_lsb(board_->white_king_);
+    std::size_t king_position = GetLSBPos(board_->black_king_);
+    uint64_t king_moves = kKingMoves[king_position] & board_->empty_ & ~kKingMoves[GetLSBPos(board_->white_king_)];
+    move_list_.AddMoves(king_position, king_moves);
+}
 
-        uint64_t attack = king_attack_from(from);
+void Moves::GetBlackKingMoves()
+{
+    std::size_t king_position = GetLSBPos(board_->black_king_);
+    uint64_t king_attacks = kKingMoves[king_position] & board_->whites_ & ~kKingMoves[GetLSBPos(board_->white_king_)];
+    move_list_.AddMoves(king_position, king_attacks);
+}
 
-        bool side = !active_side;
+void Moves::GetBlackAttacksAndPromotions()
+{
+    uint64_t pieces = board_->black_knights_;
+    uint64_t from = 0;
+    uint64_t attacks = 0;
 
-        int count = pop_count(attack);
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        attacks = kKnightMoves[from] & board_->whites_;
+        move_list_.AddMoves(from, attacks);
+        pieces &= pieces - 1;
+    }
 
-        switch(count)
+    pieces = board_->black_bishops_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        attacks = bishop_moves[from][(((kBishopMasks[from] & board_->occupied_) * kBishopMagics[from]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[from])))] & board_->whites_;
+        move_list_.AddMoves(from, attacks);
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->black_rooks_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        attacks = rook_moves[from][((kRookMasks[from] & board_->occupied_) * kRookMagics[from]) >> (kBitBoardSize - GetBitsCount(kRookMasks[from]))] & board_->whites_;
+        move_list_.AddMoves(from, attacks);
+        pieces &= pieces - 1;
+    }
+
+    attacks = (board_->black_pawns_ >> kMoveRight) & kEmptyLeft & board_->whites_;
+    move_list_.AddPawnMoves(Side::kBlack, attacks & kEmptyTop, PawnMoveType::kRightAttack);
+    move_list_.AddPawnPromotions(Side::kBlack, attacks & kTopRow, PawnMoveType::kRightAttack);
+
+    attacks = (board_->black_pawns_ >> kMoveLeft) & kEmptyRight & board_->whites_;
+    move_list_.AddPawnMoves(Side::kBlack, attacks & kEmptyTop, PawnMoveType::kLeftAttack);
+    move_list_.AddPawnPromotions(Side::kBlack, attacks & kTopRow, PawnMoveType::kLeftAttack);
+
+    attacks = (board_->black_pawns_ >> kMoveForward) & board_->empty_;
+    move_list_.AddPawnPromotions(Side::kBlack, attacks & kTopRow, PawnMoveType::kPush);
+
+    if(*en_passant_)
+    {
+        move_list_.AddPawnMoves(Side::kBlack, (board_->black_pawns_ >> kMoveRight) & kEmptyRight & *en_passant_, PawnMoveType::kEnPassantLeft);
+        move_list_.AddPawnMoves(Side::kBlack, (board_->black_pawns_ >> kMoveLeft) & kEmptyLeft & *en_passant_, PawnMoveType::kEnPassantRight);
+    }
+
+    GetBlackKingAttacks();
+}
+
+void Moves::GetBlackMoves()
+{
+    uint64_t pieces = board_->black_knights_;
+    uint64_t from = 0;
+    uint64_t moves = 0;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        moves = kKnightMoves[from] & board_->empty_;
+        move_list_.AddMoves(from, moves);
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->black_bishops_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        moves = bishop_moves[from][(((kBishopMasks[from] & board_->occupied_) * kBishopMagics[from]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[from])))] & board_->empty_;
+        move_list_.AddMoves(from, moves);
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->black_rooks_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        moves = rook_moves[from][(((kRookMasks[from] & board_->occupied_) * kRookMagics[from]) >> (kBitBoardSize - GetBitsCount(kRookMasks[from])))] & board_->empty_;
+        move_list_.AddMoves(from, moves);
+        pieces &= pieces - 1;
+    }
+
+    moves = ((board_->black_pawns_ & kSeventhRow) >> kMoveForwardTwo) & board_->empty_;
+    move_list_.AddPawnMoves(Side::kBlack, moves, PawnMoveType::kDoublePush);
+
+    moves = (board_->black_pawns_ >> kMoveForward) & board_->empty_;
+    move_list_.AddPawnMoves(Side::kBlack, moves & kEmptyTop, PawnMoveType::kPush);
+
+    if((*castling_rights_ & Castlings::kBlackCastling_0_0) && !(kF8G8 & board_->occupied_) && !(kG7H7 & board_->white_king_) )
+    {
+        move_list_.addMove(Squares::E8, Squares::G8, MoveFlags::kCastling );
+    }
+
+    if((*castling_rights_ & Castlings::kBlackCastling_0_0_0) && !(kB8C8D8 & board_->occupied_) && !(kB7C7 & board_->white_king_) )
+    {
+        move_list_.addMove(Squares::E8, Squares::C8, MoveFlags::kCastling );
+    }
+
+    GetBlackKingMoves();
+}
+
+bool Moves::MakeMove(std::size_t move)
+{
+    if(move == 0)
+        move = *move_list_.GetNextMove();
+
+    uint64_t from = GetBitSet(move & MoveMasks::kFrom);
+    uint64_t to = GetBitSet((move & MoveMasks::kTo) >> 6);
+
+    bool is_legal = true;
+    PieceType captured = PieceType::KAllPieces;
+
+    if(active_side_)
+    {
+        if(board_->white_pawns_ & from)
         {
-        case 0:
-            generate_king_attacks(ml);
-            generate_pawn_attacks(ml, board[PIECES | side]);
-            generate_knight_attacks(ml, board[PIECES | side]);
-            generate_bishop_attacks(ml, board[PIECES | side]);
-            generate_rook_attacks(ml, board[PIECES | side]);
+            board_->white_pawns_ ^= from | to;
+            board_->whites_ ^= from | to;
+            board_->occupied_ ^= from;
 
-            generate_castlings(ml);
-            generate_rook_moves(ml, board[EMPTY]);
-            generate_bishop_moves(ml, board[EMPTY]);
-            generate_knight_moves(ml, board[EMPTY]);
-            generate_pawn_moves(ml, board[EMPTY]);
-            generate_king_moves(ml);
-
-            sort_captures(ml);
-            break;
-        case 1:
-            if(attack & board[PAWN | side] || attack & board[KNIGHT | side])
+            if(move & MoveFlags::kEnPassant)
             {
-                generate_king_attacks(ml);
-                generate_pawn_attacks(ml, attack);
-                generate_knight_attacks(ml, attack);
-                generate_bishop_attacks(ml, attack);
-                generate_rook_attacks(ml, attack);
-
-                generate_king_moves(ml);
-
-                sort_captures(ml);
+                to >>= kMoveForward;
             }
-            else if(attack & board[BISHOP | side])
+        }
+        else if(board_->white_knights_ & from)
+        {
+            board_->white_knights_ ^= from | to;
+            board_->whites_ ^= from | to;
+            board_->occupied_ ^= from;
+        }
+        else if(board_->white_bishops_ & from)
+        {
+            board_->white_bishops_ ^= from | to;
+            board_->whites_ ^= from | to;
+            board_->occupied_ ^= from;
+        }
+        else if(board_->white_rooks_ & from)
+        {
+            board_->white_rooks_ ^= from | to;
+            board_->whites_ ^= from | to;
+            board_->occupied_ ^= from;
+        }
+        else if(board_->white_king_ & from)
+        {
+            board_->white_king_ ^= from | to;
+            board_->whites_ ^= from | to;
+            board_->occupied_ ^= from;
+
+            if(move & MoveFlags::kCastling)
             {
-                int bishop_square = bit_scan_forward(attack);
+                if(to == FieldBitboard::kC1)
+                    is_legal &= IsSquareAttacked(Squares::C1) || IsSquareAttacked(Squares::D1) || IsSquareAttacked(Squares::E1);
+                else
+                    is_legal &= IsSquareAttacked(Squares::G1) || IsSquareAttacked(Squares::F1) || IsSquareAttacked(Squares::E1);
 
-                uint64_t beetween = bishop_moves[from][(((bishop_masks[from] & board[OCCUPIED]) * bishop_magics[from])
-                                    >> (64 - pop_count(bishop_masks[from])))] & bishop_moves[bishop_square]
-                        [(((bishop_masks[bishop_square] & board[OCCUPIED]) * bishop_magics[bishop_square])
-                          >> (64 - pop_count(bishop_masks[bishop_square])))];
-
-                generate_king_attacks(ml);
-                generate_king_moves(ml);
-                generate_pawn_attacks(ml, attack);
-                generate_knight_attacks(ml, attack);
-                generate_bishop_attacks(ml, attack);
-                generate_rook_attacks(ml, attack);
-
-                if(beetween)
+                if(!is_legal)
                 {
-                    generate_rook_moves(ml, beetween);
-                    generate_bishop_moves(ml, beetween);
-                    generate_knight_moves(ml, beetween);
-                    generate_pawn_moves(ml, beetween);
+                    board_->white_king_ ^= from | to;
+                    board_->whites_ ^= from | to;
+                    board_->occupied_ ^= from;
+
+                    return is_legal;
+                }
+            }
+        }
+
+        if(board_->blacks_ & to)
+        {
+            if(board_->black_pawns_ & to)
+            {
+                board_->black_pawns_ ^= to;
+                board_->blacks_ ^= to;
+
+                is_legal &= IsSquareAttacked(GetLSBPos(board_->white_king_));
+
+                if(!is_legal)
+                {
+                    board_->black_pawns_ ^= to;
+                    board_->blacks_ ^= to;
+                }
+                else
+                    captured = PieceType::kBlackPawns;
+            }
+            else if(board_->black_knights_ & to)
+            {
+                board_->black_knights_ ^= to;
+                board_->blacks_ ^= to;
+
+                is_legal &= IsSquareAttacked(GetLSBPos(board_->white_king_));
+
+                if(!is_legal)
+                {
+                    board_->black_knights_ ^= to;
+                    board_->blacks_ ^= to;
+                }
+                else
+                    captured = PieceType::kBlackKnights;
+            }
+            else if(board_->black_bishops_ & to)
+            {
+                board_->black_bishops_ ^= to;
+                board_->blacks_ ^= to;
+
+                is_legal &= IsSquareAttacked(GetLSBPos(board_->white_king_));
+
+                if(!is_legal)
+                {
+                    board_->black_bishops_ ^= to;
+                    board_->blacks_ ^= to;
+                }
+                else
+                    captured = PieceType::kBlackBishops;
+            }
+            else if(board_->black_rooks_ & to)
+            {
+                board_->black_rooks_ ^= to;
+                board_->blacks_ ^= to;
+
+                is_legal &= IsSquareAttacked(GetLSBPos(board_->white_king_));
+
+                if(!is_legal)
+                {
+                    board_->black_rooks_ ^= to;
+                    board_->blacks_ ^= to;
+                }
+                else
+                    captured = PieceType::kBlackRooks;
+            }
+
+            if(!is_legal)
+            {
+                if(board_->white_pawns_ & from)
+                {
+                    board_->white_pawns_ ^= from | to;
+                    board_->whites_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->white_knights_ & from)
+                {
+                    board_->white_knights_ ^= from | to;
+                    board_->whites_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->white_bishops_ & from)
+                {
+                    board_->white_bishops_ ^= from | to;
+                    board_->whites_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->white_rooks_ & from)
+                {
+                    board_->white_rooks_ ^= from | to;
+                    board_->whites_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->white_king_ & from)
+                {
+                    board_->white_king_ ^= from | to;
+                    board_->whites_ ^= from | to;
+                    board_->occupied_ ^= from;
                 }
 
-                sort_captures(ml);
+                return is_legal;
             }
-            else if(attack & board[ROOK | side])
+        }
+        else
+        {
+            is_legal = IsSquareAttacked(GetLSBPos(board_->white_king_));
+
+            if(!is_legal)
             {
-                int rook_square = bit_scan_forward(attack);
-
-                uint64_t beetween = rook_moves[from][(((rook_masks[from] & board[OCCUPIED]) * rook_magics[from])
-                                    >> (64 - pop_count(rook_masks[from])))] & rook_moves[rook_square]
-                        [(((rook_masks[rook_square] & board[OCCUPIED]) * rook_magics[rook_square])
-                          >> (64 - pop_count(rook_masks[rook_square])))];
-
-                generate_king_attacks(ml);
-                generate_pawn_attacks(ml, attack);
-                generate_knight_attacks(ml, attack);
-                generate_bishop_attacks(ml, attack);
-                generate_rook_attacks(ml, attack);
-
-                generate_king_moves(ml);
-
-                if(beetween)
+                if(board_->white_pawns_ & from)
                 {
-                    generate_rook_moves(ml, beetween);
-                    generate_bishop_moves(ml, beetween);
-                    generate_knight_moves(ml, beetween);
-                    generate_pawn_moves(ml, beetween);
+                    board_->white_pawns_ ^= from | to;
+                    board_->whites_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->white_knights_ & from)
+                {
+                    board_->white_knights_ ^= from | to;
+                    board_->whites_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->white_bishops_ & from)
+                {
+                    board_->white_bishops_ ^= from | to;
+                    board_->whites_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->white_rooks_ & from)
+                {
+                    board_->white_rooks_ ^= from | to;
+                    board_->whites_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->white_king_ & from)
+                {
+                    board_->white_king_ ^= from | to;
+                    board_->whites_ ^= from | to;
+                    board_->occupied_ ^= from;
                 }
 
-                sort_captures(ml);
+                return is_legal;
+            }
+        }
+    }
+    else
+    {
+        if(board_->black_pawns_ & from)
+        {
+            board_->black_pawns_ ^= from | to;
+            board_->blacks_ ^= from | to;
+            board_->occupied_ ^= from;
+
+            if(move & MoveFlags::kEnPassant)
+            {
+                to <<= kMoveForward;
+            }
+        }
+        else if(board_->black_knights_ & from)
+        {
+            board_->black_knights_ ^= from | to;
+            board_->blacks_ ^= from | to;
+            board_->occupied_ ^= from;
+        }
+        else if(board_->black_bishops_ & from)
+        {
+            board_->black_bishops_ ^= from | to;
+            board_->blacks_ ^= from | to;
+            board_->occupied_ ^= from;
+        }
+        else if(board_->black_rooks_ & from)
+        {
+            board_->black_rooks_ ^= from | to;
+            board_->blacks_ ^= from | to;
+            board_->occupied_ ^= from;
+        }
+        else if(board_->black_king_ & from)
+        {
+            board_->black_king_ ^= from | to;
+            board_->blacks_ ^= from | to;
+            board_->occupied_ ^= from;
+
+            if(move & MoveFlags::kCastling)
+            {
+                if(to == FieldBitboard::kC8)
+                    is_legal = IsSquareAttacked(Squares::C8) || IsSquareAttacked(Squares::D8) || IsSquareAttacked(Squares::E8);
+                else
+                    is_legal = IsSquareAttacked(Squares::G8) || IsSquareAttacked(Squares::F8) || IsSquareAttacked(Squares::E8);
+
+                if(!is_legal)
+                {
+                    board_->black_king_ ^= from | to;
+                    board_->blacks_ ^= from | to;
+                    board_->occupied_ ^= from;
+
+                    return is_legal;
+                }
+            }
+        }
+
+        if(board_->whites_ & to)
+        {
+            if(board_->white_pawns_ & to)
+            {
+                board_->white_pawns_ ^= to;
+                board_->whites_ ^= to;
+
+                is_legal &= IsSquareAttacked(GetLSBPos(board_->black_king_));
+
+                if(!is_legal)
+                {
+                    board_->white_pawns_ ^= to;
+                    board_->whites_ ^= to;
+                }
+                else
+                    captured = PieceType::kWhitePawns;
+            }
+            else if(board_->white_knights_ & to)
+            {
+                board_->white_knights_ ^= to;
+                board_->whites_ ^= to;
+
+                is_legal &= IsSquareAttacked(GetLSBPos(board_->black_king_));
+
+                if(!is_legal)
+                {
+                    board_->white_knights_ ^= to;
+                    board_->whites_ ^= to;
+                }
+                else
+                    captured = PieceType::kWhiteKnights;
+            }
+            else if(board_->white_bishops_ & to)
+            {
+                board_->white_bishops_ ^= to;
+                board_->whites_ ^= to;
+
+                is_legal &= IsSquareAttacked(GetLSBPos(board_->black_king_));
+
+                if(!is_legal)
+                {
+                    board_->white_bishops_ ^= to;
+                    board_->whites_ ^= to;
+                }
+                else
+                    captured = PieceType::kWhiteBishops;
+            }
+            else if(board_->white_rooks_ & to)
+            {
+                board_->white_rooks_ ^= to;
+                board_->whites_ ^= to;
+
+                is_legal &= IsSquareAttacked(GetLSBPos(board_->black_king_));
+
+                if(!is_legal)
+                {
+                    board_->white_rooks_ ^= to;
+                    board_->whites_ ^= to;
+                }
+                else
+                    captured = PieceType::kWhiteRooks;
+            }
+
+            if(!is_legal)
+            {
+                if(board_->black_pawns_ & to)
+                {
+                    board_->black_pawns_ ^= from | to;
+                    board_->blacks_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->black_knights_ & to)
+                {
+                    board_->black_knights_ ^= from | to;
+                    board_->blacks_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->black_bishops_ & to)
+                {
+                    board_->black_bishops_ ^= from | to;
+                    board_->blacks_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->black_rooks_ & to)
+                {
+                    board_->black_rooks_ ^= from | to;
+                    board_->blacks_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->black_king_ & to)
+                {
+                    board_->black_king_ ^= from | to;
+                    board_->blacks_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+
+                return is_legal;
+            }
+        }
+        else
+        {
+            is_legal &= IsSquareAttacked(GetLSBPos(board_->black_king_));
+
+            if(!is_legal)
+            {
+                if(board_->black_pawns_ & to)
+                {
+                    board_->black_pawns_ ^= from | to;
+                    board_->blacks_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->black_knights_ & to)
+                {
+                    board_->black_knights_ ^= from | to;
+                    board_->blacks_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->black_bishops_ & to)
+                {
+                    board_->black_bishops_ ^= from | to;
+                    board_->blacks_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->black_rooks_ & to)
+                {
+                    board_->black_rooks_ ^= from | to;
+                    board_->blacks_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->black_king_ & to)
+                {
+                    board_->black_king_ ^= from | to;
+                    board_->blacks_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+
+                return is_legal;
+            }
+        }
+    }
+
+    ++last_move_;
+    last_move_->old_castling_rights_ = *castling_rights_;
+    last_move_->old_en_passant_ = *en_passant_;
+    last_move_->captured_ = captured;
+
+    if(active_side_)
+    {
+        if(move & MoveFlags::kCastling)
+        {
+            if(to == FieldBitboard::kG1)
+            {
+                board_->white_rooks_ ^= FieldBitboard::kF1 | FieldBitboard::kH1;
             }
             else
             {
-                generate_king_attacks(ml);
-                generate_pawn_attacks(ml, attack);
-                generate_knight_attacks(ml, attack);
-                generate_bishop_attacks(ml, attack);
-                generate_rook_attacks(ml, attack);
-
-                generate_king_moves(ml);
-
-                int queen_square = bit_scan_forward(attack);
-
-                uint64_t queen_attack = bishop_moves[from][(((bishop_masks[from] & board[OCCUPIED]) * bishop_magics[from])
-                                                             >> (64 - pop_count(bishop_masks[from])))];
-                uint64_t beetween;
-
-                if(queen_attack & board[QUEEN | side])
-                {
-
-                    beetween = queen_attack & bishop_moves[queen_square]
-                            [(((bishop_masks[queen_square] & board[OCCUPIED]) * bishop_magics[queen_square])
-                            >> (64 - pop_count(bishop_masks[queen_square])))];
-
-                    if(beetween)
-                    {
-                        generate_rook_moves(ml, beetween);
-                        generate_bishop_moves(ml, beetween);
-                        generate_knight_moves(ml, beetween);
-                        generate_pawn_moves(ml, beetween);
-                    }
-                }
-
-                queen_attack = rook_moves[from][(((rook_masks[from] & board[OCCUPIED]) * rook_magics[from])
-                                                         >> (64 - pop_count(rook_masks[from])))];
-                if(queen_attack & board[QUEEN | !active_side])
-                {
-
-                    beetween = queen_attack & rook_moves[queen_square]
-                                  [(((rook_masks[queen_square] & board[OCCUPIED]) * rook_magics[queen_square])
-                                    >> (64 - pop_count(rook_masks[queen_square])))];
-
-                    if(beetween)
-                    {
-                        generate_rook_moves(ml, beetween);
-                        generate_bishop_moves(ml, beetween);
-                        generate_knight_moves(ml, beetween);
-                        generate_pawn_moves(ml, beetween);
-                    }
-                }
-
-                sort_captures(ml);
+                board_->white_rooks_ ^= FieldBitboard::kD1 | FieldBitboard::kA1;
             }
-            break;
-        default:
-            generate_king_attacks(ml);
-            generate_king_moves(ml);
 
-            sort_captures(ml);
-        }*/
-//}
+            *castling_rights_ &= 0XC;
+        }
+        else if(move & MoveFlags::kPromotion)
+        {
+            switch((move & MoveMasks::kPromote) >> 12)
+            {
+            case PromotionType::kQueen:
+                board_->white_bishops_ ^= to;
+                board_->white_rooks_ ^= to;
+                break;
+
+            case PromotionType::kRook:
+                board_->white_rooks_ ^= to;
+                break;
+
+            case PromotionType::kBishop:
+                board_->white_bishops_ ^= to;
+                break;
+
+            case PromotionType::kKnight:
+                board_->white_knights_ ^= to;
+                break;
+            }
+
+            board_->white_pawns_ ^= to;
+        }
+        else if((board_->white_pawns_ & to) && (from << kMoveForwardTwo) == to )
+        {
+            *en_passant_ = to >> kMoveForward;
+        }
+        else if(board_->white_rooks_ & to)
+        {
+            if((*castling_rights_ & Castlings::kWhiteCastling_0_0) && from == FieldBitboard::kH1)
+                *castling_rights_ &= 0XE;
+
+            if((*castling_rights_ & Castlings::kWhiteCastling_0_0_0) && from == FieldBitboard::kA1)
+                *castling_rights_ &= 0XD;
+        }
+        else if(board_->white_king_ & to)
+        {
+            *castling_rights_ &= 0XC;
+        }
+    }
+    else
+    {
+        if(move & MoveFlags::kCastling)
+        {
+            if(to == FieldBitboard::kG8)
+            {
+                board_->white_rooks_ ^= FieldBitboard::kF8 | FieldBitboard::kH8;
+            }
+            else
+            {
+                board_->white_rooks_ ^= FieldBitboard::kD8 | FieldBitboard::kA8;
+            }
+
+            *castling_rights_ &= 0X3;
+        }
+        else if(move & MoveFlags::kPromotion)
+        {
+            switch((move & MoveMasks::kPromote) >> 12)
+            {
+            case PromotionType::kQueen:
+                board_->black_bishops_ ^= to;
+                board_->black_rooks_ ^= to;
+                break;
+
+            case PromotionType::kRook:
+                board_->black_rooks_ ^= to;
+                break;
+
+            case PromotionType::kBishop:
+                board_->black_bishops_ ^= to;
+                break;
+
+            case PromotionType::kKnight:
+                board_->black_knights_ ^= to;
+                break;
+            }
+
+            board_->black_pawns_ ^= to;
+        }
+        else if((board_->black_pawns_ & to) && (from >> kMoveForwardTwo) == to )
+        {
+            *en_passant_ = to << kMoveForward;
+        }
+        else if(board_->black_rooks_ & to)
+        {
+            if((*castling_rights_ & Castlings::kBlackCastling_0_0) && from == FieldBitboard::kH8)
+                *castling_rights_ &= 0XB;
+
+            if((*castling_rights_ & Castlings::kBlackCastling_0_0_0) && from == FieldBitboard::kA8)
+                *castling_rights_ &= 0X7;
+        }
+        else if(board_->black_king_ & to)
+        {
+            *castling_rights_ &= 0X3;
+        }
+    }
+
+    board_->empty_ = ~board_->occupied_;
+
+    if(*active_side_)
+        *active_side_ = Side::kBlack;
+    else
+        *active_side_ = Side::kWhite;
+
+    return true;
+}
+
+bool Moves::UnmakeMove(std::size_t move)
+{
+    return false;
+}
+
+bool Moves::IsSquareAttacked(std::size_t square)
+{
+    if(active_side_)
+    {
+        if(rook_moves[square][(((kRookMasks[square] & board_->occupied_) * kRookMagics[square]) >> (kBitBoardSize - GetBitsCount(kRookMasks[square])))] & (board_->black_rooks_))
+            return true;
+
+        if(bishop_moves[square][(((kBishopMasks[square] & board_->occupied_) * kBishopMagics[square]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[square])))] & (board_->black_bishops_))
+            return true;
+
+        if (kKnightMoves[square] & board_->black_knights_)
+            return true;
+
+        if (kBlackPawnsAttacks[square] & board_->black_pawns_)
+            return true;
+    }
+    else
+    {
+        if(rook_moves[square][(((kRookMasks[square] & board_->occupied_) * kRookMagics[square]) >> (kBitBoardSize - GetBitsCount(kRookMasks[square])))] & (board_->white_rooks_))
+            return true;
+
+        if(bishop_moves[square][(((kBishopMasks[square] & board_->occupied_) * kBishopMagics[square]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[square])))] & (board_->white_bishops_))
+            return true;
+
+        if (kKnightMoves[square] & board_->white_knights_)
+            return true;
+
+        if (kBlackPawnsAttacks[square] & board_->white_pawns_)
+            return true;
+    }
+
+    return false;
+}
+
+void InitializeBishopMoves()
+{
+    std::array<uint64_t, 512> blocked;
+    uint64_t mask;
+    std::size_t count;
+
+    for(std::size_t i = 0; i < kBitBoardSize; ++i)
+    {
+        blocked[0] = 0;
+
+        mask = kBishopMasks[i];
+        count = GetBitsCount(mask);
+
+        std::size_t j = 0;
+
+        for(; j < (static_cast<uint64_t>(1) << count) - 1; ++j)
+        {
+            blocked[j+1] = GetBitMaskNextPermutation(blocked[j], mask);
+        }
+
+        for(std::size_t l  = 0; l <= j; ++l)
+        {
+            uint64_t a = blocked[l];
+            uint64_t s, from = GetBitSet(i);
+            uint64_t moves = 0;
+
+            s = from;
+
+            do
+            {
+                s <<= 7;
+                s &= kEmptyRight;
+
+                moves |= s;
+
+                if(!(s & ~a))
+                    break;
+            }
+
+            while(true);
+
+            s = from;
+
+            do
+            {
+                s <<= 9;
+                s &= kEmptyLeft;
+
+                moves |= s;
+
+                if(!(s & ~a))
+                    break;
+            }
+
+            while(true);
+
+            s = from;
+
+            do
+            {
+                s >>= 9;
+                s &= kEmptyRight;
+
+                moves |= s;
+
+                if(!(s & ~a))
+                    break;
+            }
+
+            while(true);
+
+            s = from;
+
+            do
+            {
+                s >>= 7;
+                s &= kEmptyLeft;
+
+                moves |= s;
+
+                if(!(s & ~a))
+                    break;
+            }
+
+            while(true);
+
+            bishop_moves[i][(a * kBishopMagics[i]) >> (64 - count)] = moves;
+        }
+    }
+}
+
+void InitializeRookMoves()
+{
+    std::array<uint64_t, 4096> blocked;
+    uint64_t mask;
+    std::size_t count;
+
+    for(std::size_t i = 0; i < kBitBoardSize; ++i)
+    {
+        blocked[0] = 0;
+
+        mask = kRookMasks[i];
+        count = GetBitsCount(mask);
+
+        std::size_t j = 0;
+
+        for(; j < (static_cast<uint64_t>(1) << count) - 1; ++j)
+        {
+            blocked[j + 1] = GetBitMaskNextPermutation(blocked[j], mask);
+        }
+
+        for(std::size_t l  = 0; l <= j; ++l)
+        {
+            uint64_t a = blocked[l];
+            uint64_t s, from = GetBitSet(i);
+            uint64_t moves = 0;
+
+            s = from;
+
+            do
+            {
+                s >>= 1;
+                s &= kEmptyRight;
+
+                moves |= s;
+
+                if(!(s & ~a))
+                    break;
+            }
+
+            while(true);
+
+            s = from;
+
+            do
+            {
+
+                s <<= 1;
+                s &= kEmptyLeft;
+
+                moves |= s;
+
+                if(!(s & ~a))
+                    break;
+            }
+
+            while(true);
+
+            s = from;
+
+            do
+            {
+                s <<= 8;
+
+                moves |= s;
+
+                if(!(s & ~a))
+                    break;
+            }
+
+            while(true);
+
+            s = from;
+
+            do
+            {
+                s >>= 8;
+
+                moves |= s;
+
+                if(!(s & ~a))
+                    break;
+            }
+
+            while(true);
+
+            rook_moves[i][(a * kRookMagics[i]) >> (64 - count)] = moves;
+        }
+    }
+}
