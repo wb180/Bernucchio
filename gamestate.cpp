@@ -3,6 +3,8 @@
 #include "gamestate.h"
 #include "logger.h"
 
+#include <iostream>
+
 GameState::GameState() : moves_(&board_, &en_passant_, &castlings_, &active_side_), hashes_(&board_)
 {
 
@@ -104,20 +106,6 @@ bool GameState::SetFen(const std::string &fen_string)
             result = false;
     }
 
-    if(active_side_ == Side::kWhite)
-    {
-        moves_.GetWhiteMoves();
-        moves_.GetWhiteAttacksAndPromotions();
-    }
-    else
-    {
-        moves_.GetBlackMoves();
-        moves_.GetBlackAttacksAndPromotions();
-    }
-
-    Logger lg;
-    lg << moves_.move_list_;
-
     return result;
 }
 
@@ -150,4 +138,106 @@ std::string GameState::GetFen() const
     fen_string.append(std::to_string(full_moves_counter_));
 
     return fen_string;
+}
+
+uint64_t GameState::Perft(std::size_t depth)
+{
+    std::size_t *move = nullptr;
+    uint64_t moves_count = 0;
+
+    MoveList move_list;
+
+    if(active_side_)
+    {
+        moves_.GetWhiteAttacksAndPromotions(&move_list);
+        moves_.GetWhiteMoves(&move_list);
+    }
+    else
+    {
+        moves_.GetBlackAttacksAndPromotions(&move_list);
+        moves_.GetBlackMoves(&move_list);
+    }
+
+    Logger lg;
+
+    std::string fen_before = GetFen();
+
+    while((move = move_list.GetNextMove()))
+    {
+        if(GetFen() == "rnbqkbnr/pppp1ppp/8/3Np3/8/8/PPPPPPPP/R1BQKBNR b KQkq - 0 1")
+        {
+            lg.PrintMove(*move);
+        }
+
+        if(moves_.MakeMove(*move))
+        {
+            if(depth > 0)
+                moves_count += Perft(depth - 1);
+            else
+                ++moves_count;
+
+            moves_.UnmakeMove(*move);
+
+            std::string fen_after = GetFen();
+
+            if(fen_before != fen_after)
+            {
+                std::cout << *move;
+                lg.PrintMove(*move);
+
+                std::cout << std::endl << fen_before << std::endl <<
+                             fen_after << std::endl;
+                std::exit(1);
+            }
+        }
+    }
+
+    return moves_count;
+}
+
+uint64_t GameState::SplitPerft(std::size_t depth)
+{
+    std::size_t *move = nullptr;
+    uint64_t moves_count = 0;
+
+    MoveList move_list;
+
+    if(active_side_)
+    {
+        moves_.GetWhiteAttacksAndPromotions(&move_list);
+        moves_.GetWhiteMoves(&move_list);
+    }
+    else
+    {
+        moves_.GetBlackAttacksAndPromotions(&move_list);
+        moves_.GetBlackMoves(&move_list);
+    }
+
+    Logger lg;
+
+    while((move = move_list.GetNextMove()))
+    {
+        std::string fen_before = GetFen();
+
+        if(moves_.MakeMove(*move))
+        {
+            if(depth > 0)
+            {
+                lg.PrintMove(*move);
+                std::size_t perft_result = Perft(depth - 1);
+                std::cout << ": " << perft_result << std::endl;
+                moves_count += perft_result;
+            }
+            else
+            {
+                ++moves_count;
+                lg.PrintMove(*move);
+                std::cout << std::endl;
+            }
+
+            moves_.UnmakeMove(*move);
+        }
+    }
+
+    return moves_count;
 }

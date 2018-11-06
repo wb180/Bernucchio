@@ -14,7 +14,8 @@ SOURCES += \
     movelist.cpp \
     tests/fen.cpp \
     hashlist.cpp \
-    magics.cpp
+    magics.cpp \
+    tests/perft.cpp
 
 HEADERS += \
     bits_functions.h \

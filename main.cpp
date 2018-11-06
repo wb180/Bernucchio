@@ -14,6 +14,9 @@
 
 int main(int argc, char** argv)
 {
+    InitializeBishopMoves();
+    InitializeRookMoves();
+
 #ifdef BUILD_WITH_TESTS
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
@@ -23,12 +26,9 @@ int main(int argc, char** argv)
     {
 #endif
 
-        InitializeBishopMoves();
-        InitializeRookMoves();
-
         GameState gs;
-        gs.SetFen("8/8/1k6/8/2pP4/8/5BK1/8 b - d3 0 1");
-
+        gs.SetFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ");
+        std::cout << "Total: " << gs.SplitPerft(3) << std::endl;
 
 #ifdef BUILD_WITH_TESTS
     }

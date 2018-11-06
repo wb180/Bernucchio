@@ -22,7 +22,8 @@ public:
 
     Logger& operator<< (const uint64_t& bit_board);
     Logger& operator<< (const Board& board);
-    Logger& operator<< (MoveList &move_list);
+
+    void PrintMove(std::size_t &move);
 
 private:
     std::ostream *output_;

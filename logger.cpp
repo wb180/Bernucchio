@@ -92,48 +92,40 @@ Logger &Logger::operator<<(const Board &board)
     return *this;
 }
 
-Logger &Logger::operator<<(MoveList &move_list)
+void Logger::PrintMove(std::size_t &move)
 {
-    std::string move_string;
     uint64_t from, to;
-    uint64_t *move;
+    std::string move_string;
 
-    std::size_t idx = 1;
+    move_string.clear();
 
-    while((move = move_list.GetNextMove()))
+    from = move & MoveMasks::kFrom;
+    to = (move & MoveMasks::kTo) >> 6;
+
+    move_string.append(1, char('a' + from % kBoardSize));
+    move_string.append(1, char('1' + from / kBoardSize));
+
+    move_string.append(1, char('a' + to % kBoardSize));
+    move_string.append(1, char('1' + to / kBoardSize));
+
+    if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
     {
-        move_string.clear();
-
-        from = *move & MoveMasks::kFrom;
-        to = (*move & MoveMasks::kTo) >> 6;
-
-        move_string.append(1, char('a' + from % kBoardSize));
-        move_string.append(1, char('1' + from / kBoardSize));
-
-        move_string.append(1, char('a' + to % kBoardSize));
-        move_string.append(1, char('1' + to / kBoardSize));
-
-        if((*move & MoveMasks::kFlag) == MoveFlags::kPromotion)
+        switch(move & MoveMasks::kPromote)
         {
-            switch(*move & MoveMasks::kPromote)
-            {
-            case PromotionType::kQueen:
-                move_string.append(1, char('q'));
-                break;
-            case PromotionType::kRook:
-                move_string.append(1, char('r'));
-                break;
-            case PromotionType::kBishop:
-                move_string.append(1, char('b'));
-                break;
-            case PromotionType::kKnight:
-                move_string.append(1, char('n'));
-                break;
-            }
+        case PromotionType::kQueen:
+            move_string.append(1, char('q'));
+            break;
+        case PromotionType::kRook:
+            move_string.append(1, char('r'));
+            break;
+        case PromotionType::kBishop:
+            move_string.append(1, char('b'));
+            break;
+        case PromotionType::kKnight:
+            move_string.append(1, char('n'));
+            break;
         }
-
-        *output_ << idx++ << ": " << move_string << std::endl;
     }
 
-    return *this;
+    *output_ << move_string;
 }

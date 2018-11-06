@@ -11,20 +11,18 @@ class Moves
 public:
     explicit Moves(Board *board, uint64_t *en_passant, std::size_t *castling_rights, Side *side);
 
-    void GetWhiteKingAttacks();
-    void GetWhiteKingMoves();
-    void GetWhiteAttacksAndPromotions();
-    void GetWhiteMoves();
+    void GetWhiteKingAttacks(MoveList *move_list);
+    void GetWhiteKingMoves(MoveList *move_list);
+    void GetWhiteAttacksAndPromotions(MoveList *move_list);
+    void GetWhiteMoves(MoveList *move_list);
 
-    void GetBlackKingAttacks();
-    void GetBlackKingMoves();
-    void GetBlackAttacksAndPromotions();
-    void GetBlackMoves();
+    void GetBlackKingAttacks(MoveList *move_list);
+    void GetBlackKingMoves(MoveList *move_list);
+    void GetBlackAttacksAndPromotions(MoveList *move_list);
+    void GetBlackMoves(MoveList *move_list);
 
     bool MakeMove(std::size_t move);
-    bool UnmakeMove(std::size_t move = 0);
-
-    MoveList move_list_;
+    void UnmakeMove(std::size_t move);
 
 private:
     Board *board_;

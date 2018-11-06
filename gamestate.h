@@ -15,8 +15,8 @@ public:
     bool SetFen(const std::string &fen_string);
     std::string GetFen() const;
 
-    bool MakeMove(std::size_t *move);
-    bool UnmakeMove(std::size_t move = 0);
+    uint64_t Perft(std::size_t depth);
+    uint64_t SplitPerft(std::size_t depth);
 
 private:
     Board board_;
