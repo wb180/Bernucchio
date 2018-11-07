@@ -1,6 +1,7 @@
 #include "bits_functions.h"
 #include "board.h"
 #include "constants.h"
+#include "logger.h"
 
 #include <algorithm>
 #include <bitset>
@@ -101,6 +102,11 @@ bool Board::SetFen(const std::string &fen_string)
         occupied_ = whites_ | blacks_;
         empty_ = ~occupied_;
     }
+
+    std::cout << black_pawns_ << std::endl;
+
+    Logger lg;
+    lg << black_pawns_;
 
     return result;
 }

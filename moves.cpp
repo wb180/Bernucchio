@@ -75,8 +75,8 @@ void Moves::GetWhiteAttacksAndPromotions(MoveList *move_list)
 
     if(*en_passant_)
     {
-        move_list->AddPawnMoves(Side::kWhite, (board_->white_pawns_ << kMoveRight) & kEmptyLeft & *en_passant_, PawnMoveType::kEnPassantRight);
-        move_list->AddPawnMoves(Side::kWhite, (board_->white_pawns_ << kMoveLeft) & kEmptyRight & *en_passant_, PawnMoveType::kEnPassantLeft);
+        move_list->AddPawnMoves(Side::kWhite, (board_->white_pawns_ << kMoveRight) & kEmptyLeft & *en_passant_, PawnMoveType::kEnPassantLeft);
+        move_list->AddPawnMoves(Side::kWhite, (board_->white_pawns_ << kMoveLeft) & kEmptyRight & *en_passant_, PawnMoveType::kEnPassantRight);
     }
 
     GetWhiteKingAttacks(move_list);
@@ -265,17 +265,20 @@ bool Moves::MakeMove(std::size_t move)
     uint64_t from = GetBitSet(move & MoveMasks::kFrom);
     uint64_t to = GetBitSet((move & MoveMasks::kTo) >> 6);
 
+    auto x = move & MoveMasks::kFrom;
+    auto y = (move & MoveMasks::kTo) >> 6;
     bool is_legal = true;
     PieceType captured = PieceType::KAllPieces;
 
-    if(move == 2617)
-    {
-        Logger lg;
+//    if(move == 2203)
+//    {
+//        Logger lg;
 
-        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+//        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 
-        lg << board_->blacks_ << board_->occupied_ << board_->empty_;
-    }
+//        lg << board_->blacks_ << board_->occupied_ << board_->empty_;
+//        //lg << board_->white_king_ << board_->whites_ << board_->occupied_ << board_->empty_;
+//    }
 
     if(*active_side_)
     {
@@ -346,12 +349,22 @@ bool Moves::MakeMove(std::size_t move)
                 board_->black_pawns_ ^= to;
                 board_->blacks_ ^= to;
 
+                if(move & MoveFlags::kEnPassant)
+                {
+                    board_->occupied_ ^= to;
+                }
+
                 is_legal &= !IsSquareAttacked(GetLSBPos(board_->white_king_));
 
                 if(!is_legal)
                 {
                     board_->black_pawns_ ^= to;
                     board_->blacks_ ^= to;
+
+                    if(move & MoveFlags::kEnPassant)
+                    {
+                        board_->occupied_ ^= to;
+                    }
                 }
                 else
                     captured = PieceType::kBlackPawns;
@@ -421,31 +434,38 @@ bool Moves::MakeMove(std::size_t move)
 
             if(!is_legal)
             {
-                if(board_->white_pawns_ & from)
+                if(board_->white_pawns_ & to)
                 {
                     board_->white_pawns_ ^= from | to;
                     board_->whites_ ^= from | to;
                     board_->occupied_ ^= from;
                 }
-                else if(board_->white_knights_ & from)
+                else if(board_->white_knights_ & to)
                 {
                     board_->white_knights_ ^= from | to;
                     board_->whites_ ^= from | to;
                     board_->occupied_ ^= from;
                 }
-                else if(board_->white_bishops_ & from)
+                else if(board_->white_bishops_ & board_->white_rooks_ & to)
+                {
+                    board_->white_bishops_ ^= from | to;
+                    board_->white_rooks_ ^= from | to;
+                    board_->whites_ ^= from | to;
+                    board_->occupied_ ^= from;
+                }
+                else if(board_->white_bishops_ & to)
                 {
                     board_->white_bishops_ ^= from | to;
                     board_->whites_ ^= from | to;
                     board_->occupied_ ^= from;
                 }
-                else if(board_->white_rooks_ & from)
+                else if(board_->white_rooks_ & to)
                 {
                     board_->white_rooks_ ^= from | to;
                     board_->whites_ ^= from | to;
                     board_->occupied_ ^= from;
                 }
-                else if(board_->white_king_ & from)
+                else if(board_->white_king_ & to)
                 {
                     board_->white_king_ ^= from | to;
                     board_->whites_ ^= from | to;
@@ -463,42 +483,42 @@ bool Moves::MakeMove(std::size_t move)
 
             if(!is_legal)
             {
-                if(board_->white_pawns_ & from)
+                if(board_->white_pawns_ & to)
                 {
                     board_->white_pawns_ ^= from | to;
                     board_->whites_ ^= from | to;
-                    board_->occupied_ ^= from;
+                    board_->occupied_ ^= from | to;
                 }
-                else if(board_->white_knights_ & from)
+                else if(board_->white_knights_ & to)
                 {
                     board_->white_knights_ ^= from | to;
                     board_->whites_ ^= from | to;
-                    board_->occupied_ ^= from;
+                    board_->occupied_ ^= from | to;
                 }
-                else if(board_->white_bishops_ & board_->white_rooks_ & from)
+                else if(board_->white_bishops_ & board_->white_rooks_ & to)
                 {
                     board_->white_bishops_ ^= from | to;
                     board_->white_rooks_ ^= from | to;
                     board_->whites_ ^= from | to;
-                    board_->occupied_ ^= from;
+                    board_->occupied_ ^= from | to;
                 }
-                else if(board_->white_bishops_ & from)
+                else if(board_->white_bishops_ & to)
                 {
                     board_->white_bishops_ ^= from | to;
                     board_->whites_ ^= from | to;
-                    board_->occupied_ ^= from;
+                    board_->occupied_ ^= from | to;
                 }
-                else if(board_->white_rooks_ & from)
+                else if(board_->white_rooks_ & to)
                 {
                     board_->white_rooks_ ^= from | to;
                     board_->whites_ ^= from | to;
-                    board_->occupied_ ^= from;
+                    board_->occupied_ ^= from | to;
                 }
-                else if(board_->white_king_ & from)
+                else if(board_->white_king_ & to)
                 {
                     board_->white_king_ ^= from | to;
                     board_->whites_ ^= from | to;
-                    board_->occupied_ ^= from;
+                    board_->occupied_ ^= from | to;
                 }
 
                 return is_legal;
@@ -574,12 +594,22 @@ bool Moves::MakeMove(std::size_t move)
                 board_->white_pawns_ ^= to;
                 board_->whites_ ^= to;
 
+                if(move & MoveFlags::kEnPassant)
+                {
+                    board_->occupied_ ^= to;
+                }
+
                 is_legal &= !IsSquareAttacked(GetLSBPos(board_->black_king_));
 
                 if(!is_legal)
                 {
                     board_->white_pawns_ ^= to;
                     board_->whites_ ^= to;
+
+                    if(move & MoveFlags::kEnPassant)
+                    {
+                        board_->occupied_ ^= to;
+                    }
                 }
                 else
                     captured = PieceType::kWhitePawns;
@@ -661,7 +691,7 @@ bool Moves::MakeMove(std::size_t move)
                     board_->blacks_ ^= from | to;
                     board_->occupied_ ^= from;
                 }
-                else if(board_->black_bishops_ & board_->black_rooks_ & from)
+                else if(board_->black_bishops_ & board_->black_rooks_ & to)
                 {
                     board_->black_bishops_ ^= from | to;
                     board_->black_rooks_ ^= from | to;
@@ -702,31 +732,38 @@ bool Moves::MakeMove(std::size_t move)
                 {
                     board_->black_pawns_ ^= from | to;
                     board_->blacks_ ^= from | to;
-                    board_->occupied_ ^= from;
+                    board_->occupied_ ^= from | to;
                 }
                 else if(board_->black_knights_ & to)
                 {
                     board_->black_knights_ ^= from | to;
                     board_->blacks_ ^= from | to;
-                    board_->occupied_ ^= from;
+                    board_->occupied_ ^= from | to;
+                }
+                else if(board_->black_bishops_ & board_->black_rooks_ & to)
+                {
+                    board_->black_bishops_ ^= from | to;
+                    board_->black_rooks_ ^= from | to;
+                    board_->blacks_ ^= from | to;
+                    board_->occupied_ ^= from | to;
                 }
                 else if(board_->black_bishops_ & to)
                 {
                     board_->black_bishops_ ^= from | to;
                     board_->blacks_ ^= from | to;
-                    board_->occupied_ ^= from;
+                    board_->occupied_ ^= from | to;
                 }
                 else if(board_->black_rooks_ & to)
                 {
                     board_->black_rooks_ ^= from | to;
                     board_->blacks_ ^= from | to;
-                    board_->occupied_ ^= from;
+                    board_->occupied_ ^= from | to;
                 }
                 else if(board_->black_king_ & to)
                 {
                     board_->black_king_ ^= from | to;
                     board_->blacks_ ^= from | to;
-                    board_->occupied_ ^= from;
+                    board_->occupied_ ^= from | to;
                 }
 
                 return is_legal;
@@ -868,14 +905,15 @@ bool Moves::MakeMove(std::size_t move)
     else
         *active_side_ = Side::kWhite;
 
-    if(move == 2617)
-    {
-        Logger lg;
+//    if(move == 2138)
+//    {
+//        Logger lg;
 
-        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+//        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 
-        lg << board_->blacks_ << board_->occupied_ << board_->empty_;
-    }
+//        //lg << board_->blacks_ << board_->occupied_ << board_->empty_;
+//        lg << board_->whites_ << board_->occupied_ << board_->empty_;
+//    }
 
     return true;
 }
@@ -885,14 +923,15 @@ void Moves::UnmakeMove(std::size_t move)
     uint64_t from = GetBitSet(move & MoveMasks::kFrom);
     uint64_t to = GetBitSet((move & MoveMasks::kTo) >> 6);
 
-    if(move == 2617)
-    {
-        Logger lg;
+//    if(move == 2138)
+//    {
+//        Logger lg;
 
-        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+//        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 
-        lg << board_->blacks_ << board_->occupied_ << board_->empty_;
-    }
+//        //lg << board_->blacks_ << board_->occupied_ << board_->empty_;
+//        lg << board_->whites_ << board_->occupied_ << board_->empty_;
+//    }
 
     --last_move_;
 
@@ -904,7 +943,7 @@ void Moves::UnmakeMove(std::size_t move)
 
             if(move & MoveFlags::kEnPassant)
             {
-                to <<= kMoveForward;
+                to >>= kMoveForward;
             }
 
             if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
@@ -1013,7 +1052,7 @@ void Moves::UnmakeMove(std::size_t move)
 
             if(move & MoveFlags::kEnPassant)
             {
-                to >>= kMoveForward;
+                to <<= kMoveForward;
             }
 
             if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
@@ -1125,14 +1164,15 @@ void Moves::UnmakeMove(std::size_t move)
     else
         *active_side_ = Side::kWhite;
 
-    if(move == 2617)
-    {
-        Logger lg;
+//    if(move == 2138)
+//    {
+//        Logger lg;
 
-        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+//        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 
-        lg << board_->blacks_ << board_->occupied_ << board_->empty_;
-    }
+//        //lg << board_->blacks_ << board_->occupied_ << board_->empty_;
+//        lg << board_->whites_ << board_->occupied_ << board_->empty_;
+//    }
 }
 
 bool Moves::IsSquareAttacked(std::size_t square)
