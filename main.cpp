@@ -27,10 +27,10 @@ int main(int argc, char** argv)
 #endif
 
         GameState gs;
-        gs.SetFen("8/5bk1/8/2Pp4/8/1K6/8/8 w - d6 0 1");
+        gs.SetFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
 
         std::cout << gs.GetFen()<< std::endl;
-        std::cout << "Total: " << gs.SplitPerft(0) << std::endl;
+        std::cout << "Total: " << std::endl << gs.SplitPerft(2) << std::endl;
 
 #ifdef BUILD_WITH_TESTS
     }

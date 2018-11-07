@@ -3,10 +3,14 @@
 #include "logger.h"
 #include "moves.h"
 
+#include <stack>
+
 #include <iostream>
 
 static std::array<std::array<uint64_t, 512>, kBitBoardSize> bishop_moves;
 static std::array<std::array<uint64_t, 4096>, kBitBoardSize> rook_moves;
+
+static std::stack<std::pair<Board, uint64_t> > control;
 
 Moves::Moves(Board *board, uint64_t *en_passant, std::size_t *castling_rights, Side *side) : board_(board), en_passant_(en_passant),
     castling_rights_(castling_rights), active_side_(side)
@@ -268,16 +272,16 @@ bool Moves::MakeMove(std::size_t move)
     auto x = move & MoveMasks::kFrom;
     auto y = (move & MoveMasks::kTo) >> 6;
     bool is_legal = true;
-    PieceType captured = PieceType::KAllPieces;
+    PieceType captured = PieceType::KAllPieces;    
 
-//    if(move == 2203)
+//    if(move == 2980)
 //    {
 //        Logger lg;
 
 //        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 
-//        lg << board_->blacks_ << board_->occupied_ << board_->empty_;
-//        //lg << board_->white_king_ << board_->whites_ << board_->occupied_ << board_->empty_;
+//        lg << board_->black_king_ << board_->black_rooks_ << board_->blacks_ << board_->occupied_;
+//        //lg << board_->white_king_ << board_->whites_ << board_->occupied_ ;
 //    }
 
     if(*active_side_)
@@ -288,8 +292,9 @@ bool Moves::MakeMove(std::size_t move)
             board_->whites_ ^= from | to;
             board_->occupied_ ^= from;
 
-            if(move & MoveFlags::kEnPassant)
+            if((move & MoveMasks::kFlag) == MoveFlags::kEnPassant)
             {
+                board_->occupied_ ^= to;
                 to >>= kMoveForward;
             }
         }
@@ -324,12 +329,12 @@ bool Moves::MakeMove(std::size_t move)
             board_->whites_ ^= from | to;
             board_->occupied_ ^= from;
 
-            if(move & MoveFlags::kCastling)
+            if((move & MoveMasks::kFlag) == MoveFlags::kCastling)
             {
                 if(to == FieldBitboard::kC1)
-                    is_legal &= IsSquareAttacked(Squares::C1) || IsSquareAttacked(Squares::D1) || IsSquareAttacked(Squares::E1);
+                    is_legal &= !IsSquareAttacked(Squares::C1) && !IsSquareAttacked(Squares::D1) && !IsSquareAttacked(Squares::E1);
                 else
-                    is_legal &= IsSquareAttacked(Squares::G1) || IsSquareAttacked(Squares::F1) || IsSquareAttacked(Squares::E1);
+                    is_legal &= !IsSquareAttacked(Squares::G1) && !IsSquareAttacked(Squares::F1) && !IsSquareAttacked(Squares::E1);
 
                 if(!is_legal)
                 {
@@ -349,9 +354,9 @@ bool Moves::MakeMove(std::size_t move)
                 board_->black_pawns_ ^= to;
                 board_->blacks_ ^= to;
 
-                if(move & MoveFlags::kEnPassant)
+                if((move & MoveMasks::kFlag) == MoveFlags::kEnPassant)
                 {
-                    board_->occupied_ ^= to;
+                    board_->occupied_ ^= to;                    
                 }
 
                 is_legal &= !IsSquareAttacked(GetLSBPos(board_->white_king_));
@@ -361,8 +366,10 @@ bool Moves::MakeMove(std::size_t move)
                     board_->black_pawns_ ^= to;
                     board_->blacks_ ^= to;
 
-                    if(move & MoveFlags::kEnPassant)
+                    if((move & MoveMasks::kFlag) == MoveFlags::kEnPassant)
                     {
+                        board_->occupied_ ^= to;
+                        to <<= kMoveForward;
                         board_->occupied_ ^= to;
                     }
                 }
@@ -533,8 +540,9 @@ bool Moves::MakeMove(std::size_t move)
             board_->blacks_ ^= from | to;
             board_->occupied_ ^= from;
 
-            if(move & MoveFlags::kEnPassant)
+            if((move & MoveMasks::kFlag) == MoveFlags::kEnPassant)
             {
+                board_->occupied_ ^= to;
                 to <<= kMoveForward;
             }
         }
@@ -569,12 +577,12 @@ bool Moves::MakeMove(std::size_t move)
             board_->blacks_ ^= from | to;
             board_->occupied_ ^= from;
 
-            if(move & MoveFlags::kCastling)
+            if((move & MoveMasks::kFlag) == MoveFlags::kCastling)
             {
                 if(to == FieldBitboard::kC8)
-                    is_legal = !IsSquareAttacked(Squares::C8) || !IsSquareAttacked(Squares::D8) || !IsSquareAttacked(Squares::E8);
+                    is_legal = !IsSquareAttacked(Squares::C8) && !IsSquareAttacked(Squares::D8) && !IsSquareAttacked(Squares::E8);
                 else
-                    is_legal = !IsSquareAttacked(Squares::G8) || !IsSquareAttacked(Squares::F8) || !IsSquareAttacked(Squares::E8);
+                    is_legal = !IsSquareAttacked(Squares::G8) && !IsSquareAttacked(Squares::F8) && !IsSquareAttacked(Squares::E8);
 
                 if(!is_legal)
                 {
@@ -594,7 +602,7 @@ bool Moves::MakeMove(std::size_t move)
                 board_->white_pawns_ ^= to;
                 board_->whites_ ^= to;
 
-                if(move & MoveFlags::kEnPassant)
+                if((move & MoveMasks::kFlag) == MoveFlags::kEnPassant)
                 {
                     board_->occupied_ ^= to;
                 }
@@ -606,8 +614,10 @@ bool Moves::MakeMove(std::size_t move)
                     board_->white_pawns_ ^= to;
                     board_->whites_ ^= to;
 
-                    if(move & MoveFlags::kEnPassant)
+                    if((move & MoveMasks::kFlag) == MoveFlags::kEnPassant)
                     {
+                        board_->occupied_ ^= to;
+                        to >>= kMoveForward;
                         board_->occupied_ ^= to;
                     }
                 }
@@ -780,9 +790,9 @@ bool Moves::MakeMove(std::size_t move)
     if(*en_passant_)
         *en_passant_ = 0;
 
-    if(active_side_)
+    if(*active_side_)
     {
-        if(move & MoveFlags::kCastling)
+        if((move & MoveMasks::kFlag) == MoveFlags::kCastling)
         {
             if(to == FieldBitboard::kG1)
             {
@@ -841,16 +851,16 @@ bool Moves::MakeMove(std::size_t move)
     }
     else
     {
-        if(move & MoveFlags::kCastling)
+        if((move & MoveMasks::kFlag) == MoveFlags::kCastling)
         {
             if(to == FieldBitboard::kG8)
             {
-                board_->white_rooks_ ^= FieldBitboard::kF8 | FieldBitboard::kH8;
+                board_->black_rooks_ ^= FieldBitboard::kF8 | FieldBitboard::kH8;
                 board_->occupied_ ^= FieldBitboard::kF8 | FieldBitboard::kH8;
             }
             else
             {
-                board_->white_rooks_ ^= FieldBitboard::kD8 | FieldBitboard::kA8;
+                board_->black_rooks_ ^= FieldBitboard::kD8 | FieldBitboard::kA8;
                 board_->occupied_ ^= FieldBitboard::kD8 | FieldBitboard::kA8;
             }
 
@@ -905,6 +915,8 @@ bool Moves::MakeMove(std::size_t move)
     else
         *active_side_ = Side::kWhite;
 
+    control.push(std::make_pair(*board_, board_->blacks_));
+
 //    if(move == 2138)
 //    {
 //        Logger lg;
@@ -940,11 +952,6 @@ void Moves::UnmakeMove(std::size_t move)
         if(board_->white_pawns_ & to)
         {
             board_->white_pawns_ ^= from;
-
-            if(move & MoveFlags::kEnPassant)
-            {
-                to >>= kMoveForward;
-            }
 
             if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
             {
@@ -993,16 +1000,18 @@ void Moves::UnmakeMove(std::size_t move)
         {
             board_->white_king_ ^= from | to;
 
-            if(move & MoveFlags::kCastling)
+            if((move & MoveMasks::kFlag) == MoveFlags::kCastling)
             {
                 if(to == FieldBitboard::kG1)
                 {
                     board_->white_rooks_ ^= FieldBitboard::kF1 | FieldBitboard::kH1;
+                    board_->whites_ ^= FieldBitboard::kF1 | FieldBitboard::kH1;
                     board_->occupied_ ^= FieldBitboard::kF1 | FieldBitboard::kH1;
                 }
                 else
                 {
                     board_->white_rooks_ ^= FieldBitboard::kD1 | FieldBitboard::kA1;
+                    board_->whites_ ^= FieldBitboard::kD1 | FieldBitboard::kA1;
                     board_->occupied_ ^= FieldBitboard::kD1 | FieldBitboard::kA1;
                 }
             }
@@ -1014,6 +1023,14 @@ void Moves::UnmakeMove(std::size_t move)
         switch(last_move_->captured_)
         {
         case PieceType::kBlackPawns:
+
+            if((move & MoveMasks::kFlag) == MoveFlags::kEnPassant)
+            {
+                board_->occupied_ ^= to;
+                to >>= kMoveForward;
+                board_->occupied_ ^= to;
+            }
+
             board_->black_pawns_ ^= to;
             board_->blacks_ ^= to;
             break;
@@ -1049,11 +1066,6 @@ void Moves::UnmakeMove(std::size_t move)
         if(board_->black_pawns_ & to)
         {
             board_->black_pawns_ ^= from;
-
-            if(move & MoveFlags::kEnPassant)
-            {
-                to <<= kMoveForward;
-            }
 
             if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
             {
@@ -1101,16 +1113,18 @@ void Moves::UnmakeMove(std::size_t move)
         {
             board_->black_king_ ^= from | to;
 
-            if(move & MoveFlags::kCastling)
+            if((move & MoveMasks::kFlag) == MoveFlags::kCastling)
             {
                 if(to == FieldBitboard::kG8)
                 {
                     board_->black_rooks_ ^= FieldBitboard::kF8 | FieldBitboard::kH8;
+                    board_->blacks_ ^= FieldBitboard::kF8 | FieldBitboard::kH8;
                     board_->occupied_ ^= FieldBitboard::kF8 | FieldBitboard::kH8;
                 }
                 else
                 {
                     board_->black_rooks_ ^= FieldBitboard::kD8 | FieldBitboard::kA8;
+                    board_->blacks_ ^= FieldBitboard::kD8 | FieldBitboard::kA8;
                     board_->occupied_ ^= FieldBitboard::kD8 | FieldBitboard::kA8;
                 }
             }
@@ -1122,6 +1136,14 @@ void Moves::UnmakeMove(std::size_t move)
         switch(last_move_->captured_)
         {
         case PieceType::kWhitePawns:
+
+            if((move & MoveMasks::kFlag) == MoveFlags::kEnPassant)
+            {
+                board_->occupied_ ^= to;
+                to <<= kMoveForward;
+                board_->occupied_ ^= to;
+            }
+
             board_->white_pawns_ ^= to;
             board_->whites_ ^= to;
             break;
@@ -1164,6 +1186,18 @@ void Moves::UnmakeMove(std::size_t move)
     else
         *active_side_ = Side::kWhite;
 
+    if(control.top().second != board_->blacks_)
+    {
+        Logger lg;
+        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+        lg.PrintMove(move);
+        std::cout << control.top().first << std::endl;
+        lg << control.top().second << board_->blacks_;
+        std::exit(1);
+    }
+
+    control.pop();
+
 //    if(move == 2138)
 //    {
 //        Logger lg;
@@ -1188,7 +1222,7 @@ bool Moves::IsSquareAttacked(std::size_t square)
         if (kKnightMoves[square] & board_->black_knights_)
             return true;
 
-        if (kBlackPawnsAttacks[square] & board_->black_pawns_)
+        if (kWhitePawnsAttacks[square] & board_->black_pawns_)
             return true;
     }
     else

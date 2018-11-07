@@ -150,7 +150,7 @@ void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType mov
 
             for(std::size_t promote_to = PromotionType::kQueen; promote_to <= PromotionType::kBishop; ++promote_to)
             {
-                *last_move_ = from | (to << 6) | (MoveFlags::kPromotion << 12) | (promote_to << 14);
+                *last_move_ = from | (to << 6) | MoveFlags::kPromotion | (promote_to << 14);
 
 //                if(*last_move_ == 1502)
 //                {
@@ -193,7 +193,7 @@ void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType mov
 
             for(std::size_t promote_to = PromotionType::kQueen; promote_to <= PromotionType::kBishop; ++promote_to)
             {
-                *last_move_ = from | (to << 6) | (MoveFlags::kPromotion << 12) | (promote_to << 14);
+                *last_move_ = from | (to << 6) | MoveFlags::kPromotion | (promote_to << 14);
 
 //                if(*last_move_ == 1502)
 //                {
@@ -210,7 +210,7 @@ void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType mov
 
 void MoveList::addMove(std::size_t from, std::size_t to, MoveFlags flag)
 {
-    *last_move_ = from | (to << 6) | (flag << 12);
+    *last_move_ = from | (to << 6) | flag;
 
 //    if(*last_move_ == 1502)
 //    {

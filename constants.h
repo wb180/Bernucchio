@@ -23,29 +23,29 @@ const std::size_t kBitShift16 = 60;
 
 enum StartBits : std::size_t
 {
-    kFirstRowBitsStartBit   = kBoardSize *(kBoardSize - 1),
-    kSecondRowBitsStartBit  = kBoardSize *(kBoardSize - 2),
-    kThirdRowBitsStartBit   = kBoardSize *(kBoardSize - 3),
-    kFourthRowBitsStartBit  = kBoardSize *(kBoardSize - 4),
-    kFifthRowBitsStartBit   = kBoardSize *(kBoardSize - 5),
-    kSixthRowBitsStartBit   = kBoardSize *(kBoardSize - 6),
-    kSeventhRowBitsStartBit = kBoardSize *(kBoardSize - 7),
-    kEigthRowBitsStartBit   = kBoardSize *(kBoardSize - 8)
+    kEigthRowBitsStartBit   = kBoardSize *(kBoardSize - 1),
+    kSeventhRowBitsStartBit  = kBoardSize *(kBoardSize - 2),
+    kSixthRowBitsStartBit   = kBoardSize *(kBoardSize - 3),
+    kFifthRowBitsStartBit  = kBoardSize *(kBoardSize - 4),
+    kFourthRowBitsStartBit   = kBoardSize *(kBoardSize - 5),
+    kThirdRowBitsStartBit   = kBoardSize *(kBoardSize - 6),
+    kSecondRowBitsStartBit = kBoardSize *(kBoardSize - 7),
+    kFirstRowBitsStartBit   = kBoardSize *(kBoardSize - 8)
 };
 
 enum MoveMasks : std::size_t
 {
     kFrom = 63,
     kTo   = 63 << 6,
-    kPromote = 3 << 12,
-    kFlag = 3 << 14
+    kPromote = 3 << 14,
+    kFlag = 3 << 12
 };
 
 enum MoveFlags : std::size_t
 {
-    kCastling = 1 << 14,
-    kEnPassant = 2 << 14,
-    kPromotion = 3 << 14
+    kCastling = 1 << 12,
+    kEnPassant = 2 << 12,
+    kPromotion = 3 << 12
 };
 
 enum PieceType : std::size_t
