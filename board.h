@@ -11,13 +11,13 @@ class Board
 public:
     Board();
 
-    bool operator=(const &Board b1, const &Board 2);
-
     char GetPieceSymbolAtPosition(std::size_t position) const;
     std::string GetPositionFromBitBoard(const uint64_t &bb) const;
 
     bool SetFen(const std::string &fen_string);
     std::string GetFen() const;
+
+    bool operator!=(const Board &b) const;
 
 private:
 

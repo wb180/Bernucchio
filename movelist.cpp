@@ -140,10 +140,6 @@ void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType mov
                 from = to - kMoveRight;
                 break;
 
-            case PawnMoveType::kDoublePush:
-                from = to - 2 * kBoardSize;
-                break;
-
             default:
                 break;
             }
@@ -181,10 +177,6 @@ void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType mov
 
             case PawnMoveType::kLeftAttack:
                 from = to + kMoveRight;
-                break;
-
-            case PawnMoveType::kDoublePush:
-                from = to + 2 * kBoardSize;
                 break;
 
             default:

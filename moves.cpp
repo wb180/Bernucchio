@@ -10,7 +10,7 @@
 static std::array<std::array<uint64_t, 512>, kBitBoardSize> bishop_moves;
 static std::array<std::array<uint64_t, 4096>, kBitBoardSize> rook_moves;
 
-static std::stack<std::pair<Board, uint64_t> > control;
+static std::stack<std::pair<Board, std::size_t> > control;
 
 Moves::Moves(Board *board, uint64_t *en_passant, std::size_t *castling_rights, Side *side) : board_(board), en_passant_(en_passant),
     castling_rights_(castling_rights), active_side_(side)
@@ -67,15 +67,15 @@ void Moves::GetWhiteAttacksAndPromotions(MoveList *move_list)
     }
 
     attacks = (board_->white_pawns_ << kMoveRight) & kEmptyLeft & board_->blacks_;
-    move_list->AddPawnMoves(Side::kWhite, attacks & kEmptyBottom, PawnMoveType::kLeftAttack);
-    move_list->AddPawnPromotions(Side::kWhite, attacks & kBottomRow, PawnMoveType::kLeftAttack);
+    move_list->AddPawnMoves(Side::kWhite, attacks & kEmptyTop, PawnMoveType::kLeftAttack);
+    move_list->AddPawnPromotions(Side::kWhite, attacks & kTopRow, PawnMoveType::kLeftAttack);
 
     attacks = (board_->white_pawns_ << kMoveLeft) & kEmptyRight & board_->blacks_;
-    move_list->AddPawnMoves(Side::kWhite, attacks & kEmptyBottom, PawnMoveType::kRightAttack);
-    move_list->AddPawnPromotions(Side::kWhite, attacks & kBottomRow, PawnMoveType::kRightAttack);
+    move_list->AddPawnMoves(Side::kWhite, attacks & kEmptyTop, PawnMoveType::kRightAttack);
+    move_list->AddPawnPromotions(Side::kWhite, attacks & kTopRow, PawnMoveType::kRightAttack);
 
     attacks = (board_->white_pawns_ << kMoveForward) & board_->empty_;
-    move_list->AddPawnPromotions(Side::kWhite, attacks & kBottomRow, PawnMoveType::kPush);
+    move_list->AddPawnPromotions(Side::kWhite, attacks & kTopRow, PawnMoveType::kPush);
 
     if(*en_passant_)
     {
@@ -124,7 +124,7 @@ void Moves::GetWhiteMoves(MoveList *move_list)
     move_list->AddPawnMoves(Side::kWhite, moves, PawnMoveType::kDoublePush);
 
     moves = (board_->white_pawns_ << kMoveForward) & board_->empty_;
-    move_list->AddPawnMoves(Side::kWhite, moves & kEmptyBottom, PawnMoveType::kPush);
+    move_list->AddPawnMoves(Side::kWhite, moves & kEmptyTop, PawnMoveType::kPush);
 
     if((*castling_rights_ & Castlings::kWhiteCastling_0_0) && !(kF1G1 & board_->occupied_) && !(kG2H2 & board_->black_king_) )
     {
@@ -192,15 +192,15 @@ void Moves::GetBlackAttacksAndPromotions(MoveList *move_list)
     lg << (board_->black_pawns_ >> kMoveRight ) << board_->whites_;*/
 
     attacks = (board_->black_pawns_ >> kMoveLeft) & kEmptyLeft & board_->whites_;
-    move_list->AddPawnMoves(Side::kBlack, attacks & kEmptyTop, PawnMoveType::kRightAttack);
-    move_list->AddPawnPromotions(Side::kBlack, attacks & kTopRow, PawnMoveType::kRightAttack);
+    move_list->AddPawnMoves(Side::kBlack, attacks & kEmptyBottom, PawnMoveType::kRightAttack);
+    move_list->AddPawnPromotions(Side::kBlack, attacks & kBottomRow, PawnMoveType::kRightAttack);
 
     attacks = (board_->black_pawns_ >> kMoveRight) & kEmptyRight & board_->whites_;
-    move_list->AddPawnMoves(Side::kBlack, attacks & kEmptyTop, PawnMoveType::kLeftAttack);
-    move_list->AddPawnPromotions(Side::kBlack, attacks & kTopRow, PawnMoveType::kLeftAttack);
+    move_list->AddPawnMoves(Side::kBlack, attacks & kEmptyBottom, PawnMoveType::kLeftAttack);
+    move_list->AddPawnPromotions(Side::kBlack, attacks & kBottomRow, PawnMoveType::kLeftAttack);
 
     attacks = (board_->black_pawns_ >> kMoveForward) & board_->empty_;
-    move_list->AddPawnPromotions(Side::kBlack, attacks & kTopRow, PawnMoveType::kPush);
+    move_list->AddPawnPromotions(Side::kBlack, attacks & kBottomRow, PawnMoveType::kPush);
 
     if(*en_passant_)
     {
@@ -249,7 +249,7 @@ void Moves::GetBlackMoves(MoveList *move_list)
     move_list->AddPawnMoves(Side::kBlack, moves, PawnMoveType::kDoublePush);
 
     moves = (board_->black_pawns_ >> kMoveForward) & board_->empty_;
-    move_list->AddPawnMoves(Side::kBlack, moves & kEmptyTop, PawnMoveType::kPush);
+    move_list->AddPawnMoves(Side::kBlack, moves & kEmptyBottom, PawnMoveType::kPush);
 
     if((*castling_rights_ & Castlings::kBlackCastling_0_0) && !(kF8G8 & board_->occupied_) && !(kG7H7 & board_->white_king_) )
     {
@@ -272,17 +272,19 @@ bool Moves::MakeMove(std::size_t move)
     auto x = move & MoveMasks::kFrom;
     auto y = (move & MoveMasks::kTo) >> 6;
     bool is_legal = true;
-    PieceType captured = PieceType::KAllPieces;    
+    PieceType captured = PieceType::KAllPieces;
 
-//    if(move == 2980)
-//    {
-//        Logger lg;
+Board save_board = *board_;
 
-//        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+//if(move == 4484)
+//{
+//    Logger lg;
 
-//        lg << board_->black_king_ << board_->black_rooks_ << board_->blacks_ << board_->occupied_;
-//        //lg << board_->white_king_ << board_->whites_ << board_->occupied_ ;
-//    }
+//    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+
+//    lg << board_->black_king_ << board_->black_rooks_ << board_->blacks_ << board_->occupied_;
+//    //lg << board_->white_king_ << board_->whites_ << board_->occupied_ ;
+//}
 
     if(*active_side_)
     {
@@ -341,6 +343,12 @@ bool Moves::MakeMove(std::size_t move)
                     board_->white_king_ ^= from | to;
                     board_->whites_ ^= from | to;
                     board_->occupied_ ^= from;
+
+                    if(save_board != *board_)
+                    {
+                        std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
+                        std::exit(1);
+                    }
 
                     return is_legal;
                 }
@@ -528,6 +536,12 @@ bool Moves::MakeMove(std::size_t move)
                     board_->occupied_ ^= from | to;
                 }
 
+                if(save_board != *board_)
+                {
+                    std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
+                    std::exit(1);
+                }
+
                 return is_legal;
             }
         }
@@ -589,6 +603,12 @@ bool Moves::MakeMove(std::size_t move)
                     board_->black_king_ ^= from | to;
                     board_->blacks_ ^= from | to;
                     board_->occupied_ ^= from;
+
+                    if(save_board != *board_)
+                    {
+                        std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
+                        std::exit(1);
+                    }
 
                     return is_legal;
                 }
@@ -727,6 +747,12 @@ bool Moves::MakeMove(std::size_t move)
                     board_->occupied_ ^= from;
                 }
 
+                if(save_board != *board_)
+                {
+                    std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
+                    std::exit(1);
+                }
+
                 return is_legal;
             }
         }
@@ -776,6 +802,12 @@ bool Moves::MakeMove(std::size_t move)
                     board_->occupied_ ^= from | to;
                 }
 
+                if(save_board != *board_)
+                {
+                    std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
+                    std::exit(1);
+                }
+
                 return is_legal;
             }
         }
@@ -797,11 +829,13 @@ bool Moves::MakeMove(std::size_t move)
             if(to == FieldBitboard::kG1)
             {
                 board_->white_rooks_ ^= FieldBitboard::kF1 | FieldBitboard::kH1;
+                board_->whites_ ^= FieldBitboard::kF1 | FieldBitboard::kH1;
                 board_->occupied_ ^= FieldBitboard::kF1 | FieldBitboard::kH1;
             }
             else
             {
                 board_->white_rooks_ ^= FieldBitboard::kD1 | FieldBitboard::kA1;
+                board_->whites_ ^= FieldBitboard::kD1 | FieldBitboard::kA1;
                 board_->occupied_ ^= FieldBitboard::kD1 | FieldBitboard::kA1;
             }
 
@@ -809,7 +843,7 @@ bool Moves::MakeMove(std::size_t move)
         }
         else if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
         {
-            switch((move & MoveMasks::kPromote) >> 12)
+            switch((move & MoveMasks::kPromote) >> 14)
             {
             case PromotionType::kQueen:
                 board_->white_bishops_ ^= to;
@@ -848,6 +882,15 @@ bool Moves::MakeMove(std::size_t move)
             *castling_rights_ &= 0XC;
         }
 
+        if(captured == PieceType::kBlackRooks)
+        {
+            if((*castling_rights_ & Castlings::kBlackCastling_0_0) && to == FieldBitboard::kH8)
+                *castling_rights_ &= 0XB;
+
+            if((*castling_rights_ & Castlings::kBlackCastling_0_0_0) && to == FieldBitboard::kA8)
+                *castling_rights_ &= 0X7;
+        }
+
     }
     else
     {
@@ -856,11 +899,13 @@ bool Moves::MakeMove(std::size_t move)
             if(to == FieldBitboard::kG8)
             {
                 board_->black_rooks_ ^= FieldBitboard::kF8 | FieldBitboard::kH8;
+                board_->blacks_ ^= FieldBitboard::kF8 | FieldBitboard::kH8;
                 board_->occupied_ ^= FieldBitboard::kF8 | FieldBitboard::kH8;
             }
             else
             {
                 board_->black_rooks_ ^= FieldBitboard::kD8 | FieldBitboard::kA8;
+                board_->blacks_ ^= FieldBitboard::kD8 | FieldBitboard::kA8;
                 board_->occupied_ ^= FieldBitboard::kD8 | FieldBitboard::kA8;
             }
 
@@ -868,7 +913,7 @@ bool Moves::MakeMove(std::size_t move)
         }
         else if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
         {
-            switch((move & MoveMasks::kPromote) >> 12)
+            switch((move & MoveMasks::kPromote) >> 14)
             {
             case PromotionType::kQueen:
                 board_->black_bishops_ ^= to;
@@ -906,6 +951,15 @@ bool Moves::MakeMove(std::size_t move)
         {
             *castling_rights_ &= 0X3;
         }
+
+        if(captured == PieceType::kWhiteRooks)
+        {
+            if((*castling_rights_ & Castlings::kWhiteCastling_0_0) && to == FieldBitboard::kH1)
+                *castling_rights_ &= 0XE;
+
+            if((*castling_rights_ & Castlings::kWhiteCastling_0_0_0) && to == FieldBitboard::kA1)
+                *castling_rights_ &= 0XD;
+        }
     }
 
     board_->empty_ = ~board_->occupied_;
@@ -915,7 +969,7 @@ bool Moves::MakeMove(std::size_t move)
     else
         *active_side_ = Side::kWhite;
 
-    control.push(std::make_pair(*board_, board_->blacks_));
+    control.push(std::make_pair(save_board, move));
 
 //    if(move == 2138)
 //    {
@@ -951,33 +1005,7 @@ void Moves::UnmakeMove(std::size_t move)
     {
         if(board_->white_pawns_ & to)
         {
-            board_->white_pawns_ ^= from;
-
-            if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
-            {
-                switch((move & MoveMasks::kPromote) >> 12)
-                {
-                case PromotionType::kQueen:
-                    board_->white_bishops_ ^= to;
-                    board_->white_rooks_ ^= to;
-                    break;
-
-                case PromotionType::kRook:
-                    board_->white_rooks_ ^= to;
-                    break;
-
-                case PromotionType::kBishop:
-                    board_->white_bishops_ ^= to;
-                    break;
-
-                case PromotionType::kKnight:
-                    board_->white_knights_ ^= to;
-                    break;
-                }
-            }
-            else
-                board_->white_pawns_ ^= to;
-
+            board_->white_pawns_ ^= from | to;
         }
         else if(board_->white_knights_ & to)
         {
@@ -1019,6 +1047,29 @@ void Moves::UnmakeMove(std::size_t move)
 
         board_->whites_ ^= from | to;
         board_->occupied_ ^= from;
+
+        if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
+        {
+            switch((move & MoveMasks::kPromote) >> 14)
+            {
+            case PromotionType::kQueen:
+                board_->white_bishops_ ^= to;
+                board_->white_rooks_ ^= to;
+                break;
+
+            case PromotionType::kRook:
+                board_->white_rooks_ ^= to;
+                break;
+
+            case PromotionType::kBishop:
+                board_->white_bishops_ ^= to;
+                break;
+
+            case PromotionType::kKnight:
+                board_->white_knights_ ^= to;
+                break;
+            }
+        };
 
         switch(last_move_->captured_)
         {
@@ -1065,32 +1116,7 @@ void Moves::UnmakeMove(std::size_t move)
     {
         if(board_->black_pawns_ & to)
         {
-            board_->black_pawns_ ^= from;
-
-            if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
-            {
-                switch((move & MoveMasks::kPromote) >> 12)
-                {
-                case PromotionType::kQueen:
-                    board_->black_bishops_ ^= to;
-                    board_->black_rooks_ ^= to;
-                    break;
-
-                case PromotionType::kRook:
-                    board_->black_rooks_ ^= to;
-                    break;
-
-                case PromotionType::kBishop:
-                    board_->black_bishops_ ^= to;
-                    break;
-
-                case PromotionType::kKnight:
-                    board_->black_knights_ ^= to;
-                    break;
-                }
-            }
-            else
-                board_->black_pawns_ ^= to;
+            board_->black_pawns_ ^= from | to;
         }
         else if(board_->black_knights_ & to)
         {
@@ -1132,6 +1158,29 @@ void Moves::UnmakeMove(std::size_t move)
 
         board_->blacks_ ^= from | to;
         board_->occupied_ ^= from;
+
+        if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
+        {
+            switch((move & MoveMasks::kPromote) >> 14)
+            {
+            case PromotionType::kQueen:
+                board_->black_bishops_ ^= to;
+                board_->black_rooks_ ^= to;
+                break;
+
+            case PromotionType::kRook:
+                board_->black_rooks_ ^= to;
+                break;
+
+            case PromotionType::kBishop:
+                board_->black_bishops_ ^= to;
+                break;
+
+            case PromotionType::kKnight:
+                board_->black_knights_ ^= to;
+                break;
+            }
+        }
 
         switch(last_move_->captured_)
         {
@@ -1186,13 +1235,20 @@ void Moves::UnmakeMove(std::size_t move)
     else
         *active_side_ = Side::kWhite;
 
-    if(control.top().second != board_->blacks_)
+    if(control.top().first != *board_)
     {
+        std::cout << std::endl << board_->GetFen() << std::endl << control.top().first.GetFen() << std::endl;
+
+        std::cout << std::endl;
+
+        std::cout << control.top().second << std::endl;
+
         Logger lg;
-        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-        lg.PrintMove(move);
-        std::cout << control.top().first << std::endl;
-        lg << control.top().second << board_->blacks_;
+        lg.PrintMove(control.top().second);
+
+        std::cout << (board_->black_bishops_ == control.top().first.black_bishops_) << std::endl;
+        lg << board_->black_bishops_ << control.top().first.black_bishops_;
+
         std::exit(1);
     }
 

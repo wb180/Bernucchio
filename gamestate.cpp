@@ -164,12 +164,15 @@ uint64_t GameState::Perft(std::size_t depth)
 
     //std::cout << GetFen() << std::endl;
 
+//    auto idx = 1;
+
     while((move = move_list.GetNextMove()))
     {
-        if(GetFen() == "r4rk1/p1ppqNb1/bn2pnp1/3P4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQ - 0 1")
-        {
-            lg.PrintMove(*move);
-        }
+//        if(GetFen() == "r3k2N/p1ppqpb1/b3pn2/3n4/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQkq - 0 2")
+//        {
+//            std::cout << std::endl << idx++ << " ";
+//            lg.PrintMove(*move);
+//        }
 
         if(moves_.MakeMove(*move))
         {
@@ -236,7 +239,10 @@ uint64_t GameState::SplitPerft(std::size_t depth)
         std::string fen_before = GetFen();
 
         if(moves_.MakeMove(*move))
-        {            
+        {
+
+//            std::cout << GetFen() << std::endl;
+
             /*if(GetFen() == "r1bqkbnr/p1pppppp/n7/Pp6/8/8/1PPPPPPP/RNBQKBNR w KQkq b6 0 1")
             {
                 Logger lg;

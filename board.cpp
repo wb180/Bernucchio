@@ -159,6 +159,23 @@ std::string Board::GetFen() const
     return fen_string;
 }
 
+bool Board::operator!=(const Board &b) const
+{
+    return b.occupied_ != occupied_ ||
+            b.whites_ != whites_ ||
+            b.white_pawns_ != white_pawns_ ||
+            b.white_bishops_ != white_bishops_ ||
+            b.white_knights_ != white_knights_ ||
+            b.white_rooks_ != white_rooks_ ||
+            b.white_king_ != white_king_ ||
+            b.blacks_ != blacks_ ||
+            b.black_pawns_ != black_pawns_ ||
+            b.black_bishops_ != black_bishops_ ||
+            b.black_knights_ != black_knights_ ||
+            b.black_rooks_ != black_rooks_ ||
+            b.black_king_ != black_king_;
+}
+
 std::string Board::GetPositionFromBitBoard(const uint64_t &bb) const
 {
     std::string position;
