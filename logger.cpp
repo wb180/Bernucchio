@@ -110,7 +110,7 @@ void Logger::PrintMove(std::size_t &move)
 
     if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
     {
-        switch(move & MoveMasks::kPromote)
+        switch((move & MoveMasks::kPromote) >> 14)
         {
         case PromotionType::kQueen:
             move_string.append(1, char('q'));

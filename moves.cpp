@@ -3,14 +3,14 @@
 #include "logger.h"
 #include "moves.h"
 
-#include <stack>
+//#include <stack>
 
 #include <iostream>
 
 static std::array<std::array<uint64_t, 512>, kBitBoardSize> bishop_moves;
 static std::array<std::array<uint64_t, 4096>, kBitBoardSize> rook_moves;
 
-static std::stack<std::pair<Board, std::size_t> > control;
+//static std::stack<std::pair<Board, std::size_t> > control;
 
 Moves::Moves(Board *board, uint64_t *en_passant, std::size_t *castling_rights, Side *side) : board_(board), en_passant_(en_passant),
     castling_rights_(castling_rights), active_side_(side)
@@ -269,12 +269,12 @@ bool Moves::MakeMove(std::size_t move)
     uint64_t from = GetBitSet(move & MoveMasks::kFrom);
     uint64_t to = GetBitSet((move & MoveMasks::kTo) >> 6);
 
-    auto x = move & MoveMasks::kFrom;
-    auto y = (move & MoveMasks::kTo) >> 6;
+//    auto x = move & MoveMasks::kFrom;
+//    auto y = (move & MoveMasks::kTo) >> 6;
     bool is_legal = true;
     PieceType captured = PieceType::KAllPieces;
 
-Board save_board = *board_;
+//Board save_board = *board_;
 
 //if(move == 4484)
 //{
@@ -344,11 +344,11 @@ Board save_board = *board_;
                     board_->whites_ ^= from | to;
                     board_->occupied_ ^= from;
 
-                    if(save_board != *board_)
-                    {
-                        std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
-                        std::exit(1);
-                    }
+//                    if(save_board != *board_)
+//                    {
+//                        std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
+//                        std::exit(1);
+//                    }
 
                     return is_legal;
                 }
@@ -536,11 +536,11 @@ Board save_board = *board_;
                     board_->occupied_ ^= from | to;
                 }
 
-                if(save_board != *board_)
-                {
-                    std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
-                    std::exit(1);
-                }
+//                if(save_board != *board_)
+//                {
+//                    std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
+//                    std::exit(1);
+//                }
 
                 return is_legal;
             }
@@ -604,11 +604,11 @@ Board save_board = *board_;
                     board_->blacks_ ^= from | to;
                     board_->occupied_ ^= from;
 
-                    if(save_board != *board_)
-                    {
-                        std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
-                        std::exit(1);
-                    }
+//                    if(save_board != *board_)
+//                    {
+//                        std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
+//                        std::exit(1);
+//                    }
 
                     return is_legal;
                 }
@@ -747,11 +747,11 @@ Board save_board = *board_;
                     board_->occupied_ ^= from;
                 }
 
-                if(save_board != *board_)
-                {
-                    std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
-                    std::exit(1);
-                }
+//                if(save_board != *board_)
+//                {
+//                    std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
+//                    std::exit(1);
+//                }
 
                 return is_legal;
             }
@@ -802,11 +802,11 @@ Board save_board = *board_;
                     board_->occupied_ ^= from | to;
                 }
 
-                if(save_board != *board_)
-                {
-                    std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
-                    std::exit(1);
-                }
+//                if(save_board != *board_)
+//                {
+//                    std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
+//                    std::exit(1);
+//                }
 
                 return is_legal;
             }
@@ -969,7 +969,7 @@ Board save_board = *board_;
     else
         *active_side_ = Side::kWhite;
 
-    control.push(std::make_pair(save_board, move));
+    //control.push(std::make_pair(save_board, move));
 
 //    if(move == 2138)
 //    {
@@ -1003,6 +1003,31 @@ void Moves::UnmakeMove(std::size_t move)
 
     if(!(*active_side_))
     {
+        if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
+        {
+            switch((move & MoveMasks::kPromote) >> 14)
+            {
+            case PromotionType::kQueen:
+                board_->white_bishops_ ^= to;
+                board_->white_rooks_ ^= to;
+                break;
+
+            case PromotionType::kRook:
+                board_->white_rooks_ ^= to;
+                break;
+
+            case PromotionType::kBishop:
+                board_->white_bishops_ ^= to;
+                break;
+
+            case PromotionType::kKnight:
+                board_->white_knights_ ^= to;
+                break;
+            }
+
+            board_->white_pawns_ ^= to;
+        }
+
         if(board_->white_pawns_ & to)
         {
             board_->white_pawns_ ^= from | to;
@@ -1048,29 +1073,6 @@ void Moves::UnmakeMove(std::size_t move)
         board_->whites_ ^= from | to;
         board_->occupied_ ^= from;
 
-        if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
-        {
-            switch((move & MoveMasks::kPromote) >> 14)
-            {
-            case PromotionType::kQueen:
-                board_->white_bishops_ ^= to;
-                board_->white_rooks_ ^= to;
-                break;
-
-            case PromotionType::kRook:
-                board_->white_rooks_ ^= to;
-                break;
-
-            case PromotionType::kBishop:
-                board_->white_bishops_ ^= to;
-                break;
-
-            case PromotionType::kKnight:
-                board_->white_knights_ ^= to;
-                break;
-            }
-        };
-
         switch(last_move_->captured_)
         {
         case PieceType::kBlackPawns:
@@ -1114,6 +1116,31 @@ void Moves::UnmakeMove(std::size_t move)
     }
     else
     {
+        if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
+        {
+            switch((move & MoveMasks::kPromote) >> 14)
+            {
+            case PromotionType::kQueen:
+                board_->black_bishops_ ^= to;
+                board_->black_rooks_ ^= to;
+                break;
+
+            case PromotionType::kRook:
+                board_->black_rooks_ ^= to;
+                break;
+
+            case PromotionType::kBishop:
+                board_->black_bishops_ ^= to;
+                break;
+
+            case PromotionType::kKnight:
+                board_->black_knights_ ^= to;
+                break;
+            }
+
+            board_->black_pawns_ ^= to;
+        }
+
         if(board_->black_pawns_ & to)
         {
             board_->black_pawns_ ^= from | to;
@@ -1158,29 +1185,6 @@ void Moves::UnmakeMove(std::size_t move)
 
         board_->blacks_ ^= from | to;
         board_->occupied_ ^= from;
-
-        if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
-        {
-            switch((move & MoveMasks::kPromote) >> 14)
-            {
-            case PromotionType::kQueen:
-                board_->black_bishops_ ^= to;
-                board_->black_rooks_ ^= to;
-                break;
-
-            case PromotionType::kRook:
-                board_->black_rooks_ ^= to;
-                break;
-
-            case PromotionType::kBishop:
-                board_->black_bishops_ ^= to;
-                break;
-
-            case PromotionType::kKnight:
-                board_->black_knights_ ^= to;
-                break;
-            }
-        }
 
         switch(last_move_->captured_)
         {
@@ -1235,24 +1239,24 @@ void Moves::UnmakeMove(std::size_t move)
     else
         *active_side_ = Side::kWhite;
 
-    if(control.top().first != *board_)
-    {
-        std::cout << std::endl << board_->GetFen() << std::endl << control.top().first.GetFen() << std::endl;
+//    if(control.top().first != *board_)
+//    {
+//        std::cout << std::endl << board_->GetFen() << std::endl << control.top().first.GetFen() << std::endl;
 
-        std::cout << std::endl;
+//        std::cout << std::endl;
 
-        std::cout << control.top().second << std::endl;
+//        std::cout << control.top().second << std::endl;
 
-        Logger lg;
-        lg.PrintMove(control.top().second);
+//        Logger lg;
+//        lg.PrintMove(control.top().second);
 
-        std::cout << (board_->black_bishops_ == control.top().first.black_bishops_) << std::endl;
-        lg << board_->black_bishops_ << control.top().first.black_bishops_;
+//        std::cout << (board_->black_bishops_ == control.top().first.black_bishops_) << std::endl;
+//        lg << board_->black_bishops_ << control.top().first.black_bishops_;
 
-        std::exit(1);
-    }
+//        std::exit(1);
+//    }
 
-    control.pop();
+//    control.pop();
 
 //    if(move == 2138)
 //    {

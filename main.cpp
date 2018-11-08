@@ -25,12 +25,8 @@ int main(int argc, char** argv)
     else
     {
 #endif
-
         GameState gs;
-        gs.SetFen("r3k2r/p1ppNpb1/bn2pn2/3P4/1p2P3/2N2Q2/PPPBBPpP/R3K2R b KQkq - 0 2");
-
-        std::cout << gs.GetFen()<< std::endl;
-        std::cout << "Total: " << std::endl << gs.SplitPerft(0) << std::endl;
+        gs.SpeedPerft();
 
 #ifdef BUILD_WITH_TESTS
     }

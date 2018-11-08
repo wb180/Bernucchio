@@ -28,7 +28,7 @@ void MoveList::AddMoves(std::size_t from, uint64_t bit_board)
 
 void MoveList::AddPawnMoves(bool side, uint64_t bit_board, PawnMoveType move_type)
 {
-    uint64_t to, from;
+    uint64_t to, from = 0;
 
     if(side)
     {
@@ -144,7 +144,7 @@ void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType mov
                 break;
             }
 
-            for(std::size_t promote_to = PromotionType::kQueen; promote_to <= PromotionType::kBishop; ++promote_to)
+            for(std::size_t promote_to = PromotionType::kQueen; promote_to <= PromotionType::kKnight; ++promote_to)
             {
                 *last_move_ = from | (to << 6) | MoveFlags::kPromotion | (promote_to << 14);
 
@@ -183,7 +183,7 @@ void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType mov
                 break;
             }
 
-            for(std::size_t promote_to = PromotionType::kQueen; promote_to <= PromotionType::kBishop; ++promote_to)
+            for(std::size_t promote_to = PromotionType::kQueen; promote_to <= PromotionType::kKnight; ++promote_to)
             {
                 *last_move_ = from | (to << 6) | MoveFlags::kPromotion | (promote_to << 14);
 

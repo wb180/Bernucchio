@@ -17,6 +17,7 @@ public:
 
     uint64_t Perft(std::size_t depth);
     uint64_t SplitPerft(std::size_t depth);
+    void SpeedPerft();
 
 private:
     Board board_;
