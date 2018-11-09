@@ -1,9 +1,11 @@
+#include "gamestate.h"
 #include "uci.h"
 
 const std::string kUci = "uci";
 const std::string kQuit = "quit";
 const std::string KIsReady = "isready";
 const std::string kPosition = "position";
+const std::string kSpeedTest = "speed test";
 
 UCI::UCI()
 {
@@ -35,9 +37,10 @@ void UCI::Loop()
         {
 
         }
-        else if()
+        else if(command == kSpeedTest)
         {
-
+            GameState gs;
+            gs.SpeedPerft();
         }
     }
 }
