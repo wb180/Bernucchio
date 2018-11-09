@@ -5,6 +5,7 @@
 #include "logger.h"
 #include "magics.hpp"
 #include "moves.h"
+#include "uci.h"
 
 #include <numeric>
 
@@ -25,8 +26,8 @@ int main(int argc, char** argv)
     else
     {
 #endif
-        GameState gs;
-        gs.SpeedPerft();
+        UCI uci;
+        uci.Loop();
 
 #ifdef BUILD_WITH_TESTS
     }

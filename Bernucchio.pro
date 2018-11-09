@@ -6,7 +6,7 @@ CONFIG -= qt
 QMAKE_CXXFLAGS_RELEASE -= -O2
 QMAKE_CXXFLAGS_RELEASE *= -O3
 
-#DEFINES += BUILD_WITH_TESTS
+DEFINES += BUILD_WITH_TESTS
 
 SOURCES += \
         main.cpp \
@@ -18,7 +18,8 @@ SOURCES += \
     tests/fen.cpp \
     hashlist.cpp \
     magics.cpp \
-    tests/perft.cpp
+    tests/perft.cpp \
+    uci.cpp
 
 HEADERS += \
     bits_functions.h \
@@ -30,7 +31,8 @@ HEADERS += \
     movelist.h \
     hashlist.h \
     magics.hpp \
-    moveinfo.h
+    moveinfo.h \
+    uci.h
 
 DISTFILES += \
     readme.md
