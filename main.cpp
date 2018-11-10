@@ -1,19 +1,13 @@
 #include <iostream>
 
-#include "bits_functions.h"
-#include "gamestate.h"
-#include "logger.h"
-#include "magics.hpp"
 #include "moves.h"
 #include "uci.h"
-
-#include <numeric>
 
 #ifdef BUILD_WITH_TESTS
     #include <gtest/gtest.h>
 #endif
 
-int main(int argc, char** argv)
+int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
 {
     InitializeBishopMoves();
     InitializeRookMoves();

@@ -22,7 +22,11 @@ const std::size_t index64[64] =
 
 inline std::size_t GetLSBPos(uint64_t bb)
 {
+#ifdef BUILD_WITH_CTZLL
+    return static_cast<std::size_t>(__builtin_ctzll(bb));
+#else
    return index64[((bb ^ (bb-1)) * 0x03f79d71b4cb0a89) >> 58];
+#endif
 }
 
 inline uint64_t GetLSB(uint64_t bb)
@@ -43,10 +47,14 @@ inline std::size_t GetMSBPos(uint64_t bb)
 
 inline std::size_t GetBitsCount(uint64_t bb)
 {
+#ifdef BUILD_WITH_POPCOUNT
+    return  static_cast<std::size_t>(__builtin_popcountll(bb));
+#else
     bb = bb - ((bb >> 1) & 0X5555555555555555);
     bb = (bb & 0X3333333333333333) + ((bb >> 2) & 0X3333333333333333);
     bb = (bb + (bb >> 4)) & 0XF0F0F0F0F0F0F0F;
     return (bb * 0X101010101010101) >> 56;
+#endif
 }
 
 inline uint64_t GetBitMaskNextPermutation(uint64_t permutation, uint64_t mask)

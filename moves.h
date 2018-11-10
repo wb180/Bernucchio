@@ -21,6 +21,8 @@ public:
     void GetBlackAttacksAndPromotions(MoveList *move_list);
     void GetBlackMoves(MoveList *move_list);
 
+    std::size_t GetMove(const std::string& move_string);
+
     bool MakeMove(std::size_t move);
     void UnmakeMove(std::size_t move);
 

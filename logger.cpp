@@ -21,7 +21,7 @@ Logger::Logger(std::string file_name) : output_(nullptr), type_(LoggerType::kFil
     if( !file_stream || !file_stream->is_open() )
     {
         std::cerr << "Could not open the file: " << file_name << std::endl;
-        quick_exit (EXIT_FAILURE);
+        /*quick_*/exit (EXIT_FAILURE);
     }
     else
         output_ = file_stream.get();
@@ -36,7 +36,7 @@ Logger::~Logger()
         if(file_stream->is_open())
         {
             std::cerr << "Could not close the file" << std::endl;
-            quick_exit (EXIT_FAILURE);
+            /*quick_*/exit (EXIT_FAILURE);
         }
     }
 }

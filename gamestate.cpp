@@ -141,6 +141,16 @@ std::string GameState::GetFen() const
     return fen_string;
 }
 
+bool GameState::MakeMove(const std::string &move_string)
+{
+    std::size_t move = moves_.GetMove(move_string);
+
+    if(move)
+        return moves_.MakeMove(move);
+
+    return move == 0;
+}
+
 uint64_t GameState::Perft(std::size_t depth)
 {
     std::size_t *move = nullptr;
@@ -322,4 +332,9 @@ void GameState::SpeedPerft()
     }
 
     std::cout << "Average speed: " << sum_nodes / double(sum_duration) << std::endl << std::endl;
+}
+
+Side GameState::GetSide() const
+{
+    return active_side_;
 }

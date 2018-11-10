@@ -15,9 +15,13 @@ public:
     bool SetFen(const std::string &fen_string);
     std::string GetFen() const;
 
+    bool MakeMove(const std::string &move_string);
+
     uint64_t Perft(std::size_t depth);
     uint64_t SplitPerft(std::size_t depth);
     void SpeedPerft();
+
+    Side GetSide() const;
 
 private:
     Board board_;

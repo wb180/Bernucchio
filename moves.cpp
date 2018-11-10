@@ -1303,6 +1303,101 @@ bool Moves::IsSquareAttacked(std::size_t square)
     return false;
 }
 
+std::size_t Moves::GetMove(const std::string &move_string)
+{
+    std::size_t move = 0;
+
+    std::size_t from = static_cast<std::size_t>(move_string[1] - '1') * kBoardSize + static_cast<std::size_t>(move_string[0] - 'a');
+    std::size_t to = static_cast<std::size_t>(move_string[3] - '1') * kBoardSize + static_cast<std::size_t>(move_string[2] - 'a');
+    uint64_t from_bitboard = GetBitSet(from);
+    uint64_t to_bitboard = GetBitSet(to);
+
+    if(*active_side_)
+    {
+        if((from_bitboard & FieldBitboard::kE1) && (to_bitboard & FieldBitboard::kH1) && (from_bitboard & board_->white_king_) )
+        {
+            if(!(*castling_rights_ & Castlings::kWhiteCastling_0_0) || !(board_->white_rooks_ & to_bitboard) )
+                move = from | (to << 6) | MoveFlags::kCastling;
+        }
+        else if((from_bitboard & FieldBitboard::kE1) && (to_bitboard & FieldBitboard::kA1) && (from_bitboard & board_->white_king_) )
+        {
+            if(!(*castling_rights_ & Castlings::kWhiteCastling_0_0_0) || !(board_->white_rooks_ & to_bitboard) )
+                move = from | (to << 6) | MoveFlags::kCastling;
+        }
+        else if(*en_passant_ && (to_bitboard & board_->empty_) && (to_bitboard >>= kMoveForward) & *en_passant_)
+        {
+            if(from_bitboard & board_->white_pawns_)
+                move = from | (to << 6) | MoveFlags::kEnPassant;
+        }
+        else if(move_string.size() == 5)
+        {
+            if((to_bitboard & kTopRow) && (from_bitboard & board_->white_pawns_))
+                switch(move_string[4])
+                {
+                case 'q':
+                    move |= from | (to << 6) | MoveFlags::kPromotion | PromotionType::kQueen << 14;
+                    break;
+                case 'r':
+                    move |= from | (to << 6) | MoveFlags::kPromotion | PromotionType::kRook << 14;
+                    break;
+                case 'b':
+                    move |= from | (to << 6) | MoveFlags::kPromotion | PromotionType::kBishop << 14;
+                    break;
+                case 'n':
+                    move |= from | (to << 6) | MoveFlags::kPromotion | PromotionType::kKnight << 14;
+                    break;
+                }
+        }
+        else if(from_bitboard & board_->whites_)
+        {
+            move = from | (to << 6);
+        }
+    }
+    else
+    {
+        if((from_bitboard & FieldBitboard::kE8) && (to_bitboard & FieldBitboard::kH8) && (from_bitboard & board_->black_king_) )
+        {
+            if(!(*castling_rights_ & Castlings::kBlackCastling_0_0) || !(board_->black_rooks_ & to_bitboard) )
+                move = from | (to << 6) | MoveFlags::kCastling;
+        }
+        else if((from_bitboard & FieldBitboard::kE8) && (to_bitboard & FieldBitboard::kA8) && (from_bitboard & board_->black_king_) )
+        {
+            if(!(*castling_rights_ & Castlings::kBlackCastling_0_0_0) || !(board_->black_rooks_ & to_bitboard) )
+                move = from | (to << 6) | MoveFlags::kCastling;
+        }
+        else if(*en_passant_ && (to_bitboard & board_->empty_) && (to_bitboard >>= kMoveForward) & *en_passant_)
+        {
+            if(from_bitboard & board_->black_pawns_)
+                move = from | (to << 6) | MoveFlags::kEnPassant;
+        }
+        else if(move_string.size() == 5)
+        {
+            if((to_bitboard & kBottomRow) && (from_bitboard & board_->black_pawns_))
+                switch(move_string[4])
+                {
+                case 'q':
+                    move |= from | (to << 6) | MoveFlags::kPromotion | PromotionType::kQueen << 14;
+                    break;
+                case 'r':
+                    move |= from | (to << 6) | MoveFlags::kPromotion | PromotionType::kRook << 14;
+                    break;
+                case 'b':
+                    move |= from | (to << 6) | MoveFlags::kPromotion | PromotionType::kBishop << 14;
+                    break;
+                case 'n':
+                    move |= from | (to << 6) | MoveFlags::kPromotion | PromotionType::kKnight << 14;
+                    break;
+                }
+        }
+        else if(from_bitboard & board_->blacks_)
+        {
+            move = from | (to << 6);
+        }
+    }
+
+    return move;
+}
+
 void InitializeBishopMoves()
 {
     std::array<uint64_t, 512> blocked;
