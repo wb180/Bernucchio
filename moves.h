@@ -26,6 +26,8 @@ public:
     bool MakeMove(std::size_t move);
     void UnmakeMove(std::size_t move);
 
+    bool IsKingAttacked() const;
+
 private:
     Board *board_;
     uint64_t *en_passant_;
@@ -34,7 +36,7 @@ private:
     std::array<MoveInfo, 512> move_infos;
     MoveInfo *last_move_;
 
-    bool IsSquareAttacked(std::size_t square);
+    bool IsSquareAttacked(std::size_t square) const;
 };
 
 void InitializeBishopMoves();

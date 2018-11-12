@@ -264,4 +264,7 @@ const std::array<uint64_t, 64> kBishopMagics = {{
       0x8400020100880401, 0x208423080800, 0x8800040000420a04, 0x1008a2024400, 0x401400a040110, 0x8602002008108,
       0x1002180101020200}};
 
+const int kHighestScore = 99999;
+const int kMateScore    = 999999;
+
 #endif // CONSTANTS_H

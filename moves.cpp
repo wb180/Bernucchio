@@ -1266,10 +1266,15 @@ void Moves::UnmakeMove(std::size_t move)
 
 //        //lg << board_->blacks_ << board_->occupied_ << board_->empty_;
 //        lg << board_->whites_ << board_->occupied_ << board_->empty_;
-//    }
+    //    }
 }
 
-bool Moves::IsSquareAttacked(std::size_t square)
+bool Moves::IsKingAttacked() const
+{
+    return IsSquareAttacked(*active_side_ ? GetLSBPos(board_->white_king_) : GetLSBPos(board_->black_king_) );
+}
+
+bool Moves::IsSquareAttacked(std::size_t square) const
 {
     if(*active_side_)
     {

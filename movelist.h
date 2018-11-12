@@ -17,6 +17,7 @@ public:
     void AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType move_type);
     void addMove(std::size_t from, std::size_t to, MoveFlags flag);
     void Reset();
+    bool Empty() const;
 
 private:
     std::array<std::size_t, 256> moves_;

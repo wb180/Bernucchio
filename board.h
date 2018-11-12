@@ -7,6 +7,7 @@ class Board
 {
     friend class Moves;
     friend class HashList;
+    friend class Evaluator;
 
 public:
     Board();

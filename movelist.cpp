@@ -218,6 +218,11 @@ void MoveList::Reset()
     current_move_ = &moves_[0];
 }
 
+bool MoveList::Empty() const
+{
+    return current_move_ == last_move_;
+}
+
 std::size_t *MoveList::GetNextMove()
 {
     if(current_move_ == last_move_)

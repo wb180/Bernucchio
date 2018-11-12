@@ -2,10 +2,12 @@
 #define GAMESTATE_H
 
 #include "board.h"
+#include "evaluator.h"
 #include "hashlist.h"
 #include "moves.h"
 
 #include <cstdint>
+#include <vector>
 
 class GameState
 {
@@ -23,10 +25,14 @@ public:
 
     Side GetSide() const;
 
+    int NegaMax(std::size_t depth, std::size_t *pv_line);
+    void Search(std::size_t depth);
+
 private:
     Board board_;
     Moves moves_;
     HashList hashes_;
+    Evaluator evaluator_;
 
     std::array<MoveInfo, 512> move_infos;
     MoveInfo *last_move_;

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <chrono>
 
-GameState::GameState() : moves_(&board_, &en_passant_, &castlings_, &active_side_), hashes_(&board_)
+GameState::GameState() : moves_(&board_, &en_passant_, &castlings_, &active_side_), hashes_(&board_), evaluator_(&board_)
 {
 
 }
@@ -337,4 +337,119 @@ void GameState::SpeedPerft()
 Side GameState::GetSide() const
 {
     return active_side_;
+}
+
+void PrintMove(std::size_t &move)
+{
+    uint64_t from, to;
+    std::string move_string;
+
+    move_string.clear();
+
+    from = move & MoveMasks::kFrom;
+    to = (move & MoveMasks::kTo) >> 6;
+
+    move_string.append(1, char('a' + from % kBoardSize));
+    move_string.append(1, char('1' + from / kBoardSize));
+
+    move_string.append(1, char('a' + to % kBoardSize));
+    move_string.append(1, char('1' + to / kBoardSize));
+
+    if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
+    {
+        switch((move & MoveMasks::kPromote) >> 14)
+        {
+        case PromotionType::kQueen:
+            move_string.append(1, char('q'));
+            break;
+        case PromotionType::kRook:
+            move_string.append(1, char('r'));
+            break;
+        case PromotionType::kBishop:
+            move_string.append(1, char('b'));
+            break;
+        case PromotionType::kKnight:
+            move_string.append(1, char('n'));
+            break;
+        }
+    }
+
+    std::cout << move_string;
+}
+
+int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
+{
+    if(depth == 0)
+        return active_side_ == Side::kWhite ? evaluator_.Score() : -evaluator_.Score();
+
+    MoveList move_list;
+
+    if(active_side_)
+    {
+        moves_.GetWhiteAttacksAndPromotions(&move_list);
+        moves_.GetWhiteMoves(&move_list);
+    }
+    else
+    {
+        moves_.GetBlackAttacksAndPromotions(&move_list);
+        moves_.GetBlackMoves(&move_list);
+    }
+
+    int score = -kMateScore;
+
+    std::size_t *move = nullptr;
+    int current_score;
+    std::size_t best_move = 0;
+
+    while((move = move_list.GetNextMove()))
+    {
+        if(moves_.MakeMove(*move))
+        {
+            current_score = score;
+            ++pv_line;
+            score = std::max(score, -NegaMax(depth - 1, pv_line));
+            --pv_line;
+
+            if(score != current_score)
+            {
+                best_move = *move;
+                *pv_line = *move;
+            }
+
+            moves_.UnmakeMove(*move);
+        }
+
+    }
+
+//    if(!best_move)
+//        *pv_line = 0;
+
+    if(!best_move && !moves_.IsKingAttacked())
+        score = 0;
+
+    if(score >= -kMateScore && score < -kHighestScore)
+        ++score;
+
+    return score;
+}
+
+void GameState::Search(std::size_t depth)
+{
+    std::array<std::size_t, 256> pv_line{};
+
+    for(std::size_t iterative_depth = 0; iterative_depth <= depth; ++iterative_depth)
+    {
+        std::cout << NegaMax(iterative_depth, &pv_line[0]) << std::endl;
+
+        for(auto move : pv_line)
+        {
+            if(!move)
+                break;
+
+            PrintMove(move);
+            std::cout << "  ";
+        }
+
+        std::cout << std::endl;
+    }
 }
