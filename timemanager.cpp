@@ -1,5 +1,7 @@
 #include "timemanager.h"
 
+#include <iostream>
+
 TimeManager::TimeManager()
 {
 
@@ -40,13 +42,18 @@ void TimeManager::CalculateTime()
     }
     else
     {
-        move_time = our_time_ / 50 + our_increment_;
+        move_time = static_cast<uint64_t>(our_time_ / 40 + 0.75 * our_increment_);
     }
 
-    calculated_move_time_ = std::chrono::milliseconds {move_time};
+    finish_time =  std::chrono::steady_clock::now() + std::chrono::milliseconds {move_time};
 }
 
-std::chrono::milliseconds TimeManager::GetMoveTime() const
+bool TimeManager::CheckTime() const
 {
-    return calculated_move_time_;
+    /*auto t1 = std::chrono::steady_clock::now();
+    auto t2 = finish_time;
+
+    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() << std::endl;*/
+
+    return  std::chrono::steady_clock::now() < finish_time;
 }

@@ -2,6 +2,8 @@
 #include "timemanager.h"
 #include "uci.h"
 
+#include <fstream>
+
 #include <sstream>
 
 const std::string kUci = "uci";
@@ -32,8 +34,13 @@ void UCI::Loop()
     std::string token;
     std::size_t number_value;
 
+//    std::ofstream myfile;
+//    myfile.open ("log_in.txt", std::ios::app);
+
     while(std::getline(std::cin, command))
     {
+//        myfile << command << std::endl;
+
         std::istringstream ss{ command };
         ss >> token;
 
@@ -41,8 +48,8 @@ void UCI::Loop()
           break;
         else if(token == kUci)
         {
-            std::cout << "id name Shredder" << std::endl
-                      << "id author Stefan MK" << std::endl
+            std::cout << "id name Bernucchio v_11122018" << std::endl
+                      << "id author WirBrauchen180" << std::endl
                       << "uciok" << std::endl;
 
             std::flush(std::cout);
@@ -92,7 +99,8 @@ void UCI::Loop()
                 {
                     ss >> number_value;
 
-                    if(Searches::GetInstance().GetMainThread()->GetOurSide() == Side::kWhite)
+                    if((Searches::GetInstance().GetMainThread()->GetOurSide() == Side::kWhite && token == kWTime) ||
+                            (Searches::GetInstance().GetMainThread()->GetOurSide() == Side::kBlack && token == kBTime))
                         TimeManager::GetInstance().SetOurTime(number_value);
                     else
                         TimeManager::GetInstance().SetOpponentTime(number_value);
@@ -101,7 +109,8 @@ void UCI::Loop()
                 {
                     ss >> number_value;
 
-                    if(Searches::GetInstance().GetMainThread()->GetOurSide() == Side::kWhite)
+                    if((Searches::GetInstance().GetMainThread()->GetOurSide() == Side::kWhite && token == kWInc) ||
+                            (Searches::GetInstance().GetMainThread()->GetOurSide() == Side::kBlack && token == kBInc))
                         TimeManager::GetInstance().SetOurIncrement(number_value);
                     else
                         TimeManager::GetInstance().SetOpponentIncrement(number_value);
@@ -123,4 +132,6 @@ void UCI::Loop()
             Searches::GetInstance().GetMainThread()->Stop();
         }
     }
+
+//    myfile.close();
 }

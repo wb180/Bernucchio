@@ -2,6 +2,7 @@
 #include "constants.h"
 #include "gamestate.h"
 #include "logger.h"
+#include "timemanager.h"
 
 #include <iostream>
 #include <chrono>
@@ -146,7 +147,13 @@ bool GameState::MakeMove(const std::string &move_string)
     std::size_t move = moves_.GetMove(move_string);
 
     if(move)
-        return moves_.MakeMove(move);
+    {
+        auto r = moves_.MakeMove(move);
+
+        std::cout << GetFen() << std::endl;
+
+        return r;
+    }
 
     return move == 0;
 }
@@ -339,7 +346,7 @@ Side GameState::GetSide() const
     return active_side_;
 }
 
-void PrintMove(std::size_t &move)
+std::string PrintMove(std::size_t &move)
 {
     uint64_t from, to;
     std::string move_string;
@@ -374,82 +381,107 @@ void PrintMove(std::size_t &move)
         }
     }
 
-    std::cout << move_string;
+    return move_string;
 }
 
 int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
 {
-    if(depth == 0)
-        return active_side_ == Side::kWhite ? evaluator_.Score() : -evaluator_.Score();
-
-    MoveList move_list;
-
-    if(active_side_)
+    if(!time_out)
     {
-        moves_.GetWhiteAttacksAndPromotions(&move_list);
-        moves_.GetWhiteMoves(&move_list);
-    }
-    else
-    {
-        moves_.GetBlackAttacksAndPromotions(&move_list);
-        moves_.GetBlackMoves(&move_list);
-    }
+        if(depth == 0)
+            return active_side_ == Side::kWhite ? evaluator_.Score() : -evaluator_.Score();
 
-    int score = -kMateScore;
+        MoveList move_list;
 
-    std::size_t *move = nullptr;
-    int current_score;
-    std::size_t best_move = 0;
-
-    while((move = move_list.GetNextMove()))
-    {
-        if(moves_.MakeMove(*move))
+        if(active_side_)
         {
-            current_score = score;
-            ++pv_line;
-            score = std::max(score, -NegaMax(depth - 1, pv_line));
-            --pv_line;
-
-            if(score != current_score)
-            {
-                best_move = *move;
-                *pv_line = *move;
-            }
-
-            moves_.UnmakeMove(*move);
+            moves_.GetWhiteAttacksAndPromotions(&move_list);
+            moves_.GetWhiteMoves(&move_list);
+        }
+        else
+        {
+            moves_.GetBlackAttacksAndPromotions(&move_list);
+            moves_.GetBlackMoves(&move_list);
         }
 
+        int score = -kMateScore;
+
+        std::size_t *move = nullptr;
+        int current_score;
+        std::size_t best_move = 0;
+
+        while((move = move_list.GetNextMove()))
+        {
+            if(moves_.MakeMove(*move))
+            {
+                current_score = score;
+                ++nodes;
+
+                ++pv_line;
+                score = std::max(score, -NegaMax(depth - 1, pv_line));
+                --pv_line;
+
+                if(score != current_score)
+                {
+                    best_move = *move;
+                    *pv_line = *move;
+                }
+
+                moves_.UnmakeMove(*move);
+            }
+        }
+
+        if (!(nodes & 16383))
+            time_out = time_out || !TimeManager::GetInstance().CheckTime();
+
+        if(time_out)
+            return {};
+
+        if(!best_move && !moves_.IsKingAttacked())
+            score = 0;
+
+        if(score >= -kMateScore && score < -kHighestScore)
+            ++score;
+
+        return score;
     }
-
-//    if(!best_move)
-//        *pv_line = 0;
-
-    if(!best_move && !moves_.IsKingAttacked())
-        score = 0;
-
-    if(score >= -kMateScore && score < -kHighestScore)
-        ++score;
-
-    return score;
+    return {};
 }
 
-void GameState::Search(std::size_t depth)
+void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
 {
     std::array<std::size_t, 256> pv_line{};
+    stop_ = stop;
+    std::size_t best_move = 0;
+
+    time_out = false;
+    nodes = 0;
 
     for(std::size_t iterative_depth = 0; iterative_depth <= depth; ++iterative_depth)
     {
-        std::cout << NegaMax(iterative_depth, &pv_line[0]) << std::endl;
+        NegaMax(iterative_depth, &pv_line[0]);
+        best_move = pv_line[0];
 
-        for(auto move : pv_line)
-        {
-            if(!move)
-                break;
+//        for(auto move : pv_line)
+//        {
+//            if(!move)
+//                break;
 
-            PrintMove(move);
-            std::cout << "  ";
-        }
+//            PrintMove(move);
+//            std::cout << "  ";
+//        }
+        if(*stop_ || time_out)
+            break;
 
-        std::cout << std::endl;
+        //std::cout << iterative_depth << std::endl;
     }
+
+//    std::ofstream myfile;
+//    myfile.open ("log_out.txt", std::ios::app);
+//    myfile << "bestmove " << PrintMove(best_move) << std::endl;
+
+    std::cout << "bestmove " << PrintMove(best_move) << std::endl;
+
+//    myfile.close();
+
 }

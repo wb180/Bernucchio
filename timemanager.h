@@ -24,7 +24,7 @@ public:
     void SetMovesToGo(std::size_t moves);
 
     void CalculateTime();
-    std::chrono::milliseconds GetMoveTime() const;
+    bool CheckTime() const;
 
 private:
     TimeManager();
@@ -35,7 +35,7 @@ private:
     std::size_t opponent_increment_;
     std::size_t moves_to_go_;
 
-    std::chrono::milliseconds calculated_move_time_;
+    std::chrono::time_point<std::chrono::steady_clock> finish_time;
 };
 
 #endif // TIMEMANAGER_H

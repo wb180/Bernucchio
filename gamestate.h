@@ -6,7 +6,9 @@
 #include "hashlist.h"
 #include "moves.h"
 
+#include <atomic>
 #include <cstdint>
+#include <functional>
 #include <vector>
 
 class GameState
@@ -26,7 +28,7 @@ public:
     Side GetSide() const;
 
     int NegaMax(std::size_t depth, std::size_t *pv_line);
-    void Search(std::size_t depth);
+    void Search(std::size_t depth, std::atomic<bool> *stop = nullptr);
 
 private:
     Board board_;
@@ -44,6 +46,10 @@ private:
     uint64_t en_passant_;
     std::size_t fifty_moves_counter_;
     std::size_t full_moves_counter_;
+
+    std::atomic<bool> *stop_;
+    bool time_out = false;
+    uint64_t nodes;
 };
 
 #endif // GAMESTATE_H

@@ -63,7 +63,7 @@ void Search::Loop()
 
 void Search::RunSearch()
 {
-
+    state_.Search(100, &stop_);
 }
 
 void Search::Wait()
