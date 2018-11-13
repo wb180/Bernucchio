@@ -1,3 +1,4 @@
+#include "logger.h"
 #include "search.h"
 #include "timemanager.h"
 #include "uci.h"
@@ -22,6 +23,7 @@ const std::string kBInc = "binc";
 const std::string kMovesToGo = "movestogo";
 const std::string kInfinite = "infinite";
 const std::string kStop = "stop";
+const std::string kSpeedTest = "speedtest";
 
 UCI::UCI()
 {
@@ -34,12 +36,11 @@ void UCI::Loop()
     std::string token;
     std::size_t number_value;
 
-//    std::ofstream myfile;
-//    myfile.open ("log_in.txt", std::ios::app);
+    Logger::GetInstance("log.txt") << "New Instance";
 
     while(std::getline(std::cin, command))
     {
-//        myfile << command << std::endl;
+       Logger::GetInstance("log.txt") << command;
 
         std::istringstream ss{ command };
         ss >> token;
@@ -48,7 +49,7 @@ void UCI::Loop()
           break;
         else if(token == kUci)
         {
-            std::cout << "id name Bernucchio v_11122018" << std::endl
+            std::cout << "id name Bernucchio 11132018" << std::endl
                       << "id author WirBrauchen180" << std::endl
                       << "uciok" << std::endl;
 
@@ -130,6 +131,11 @@ void UCI::Loop()
         else if(token == kStop)
         {
             Searches::GetInstance().GetMainThread()->Stop();
+        }
+        else if(token == kSpeedTest)
+        {
+            GameState s;
+            s.SpeedPerft();
         }
     }
 

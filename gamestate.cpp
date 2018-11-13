@@ -148,14 +148,10 @@ bool GameState::MakeMove(const std::string &move_string)
 
     if(move)
     {
-        auto r = moves_.MakeMove(move);
-
-        std::cout << GetFen() << std::endl;
-
-        return r;
+        return moves_.MakeMove(move);
     }
 
-    return move == 0;
+    return false;
 }
 
 uint64_t GameState::Perft(std::size_t depth)
@@ -250,7 +246,6 @@ uint64_t GameState::SplitPerft(std::size_t depth)
         moves_.GetBlackMoves(&move_list);
     }
 
-    Logger lg;
     int idx = 1;
 
     while((move = move_list.GetNextMove()))
@@ -271,7 +266,7 @@ uint64_t GameState::SplitPerft(std::size_t depth)
             if(depth > 0)
             {
                 //std::cout << std::endl;
-                lg.PrintMove(*move);
+                //lg.PrintMove(*move);
                 std::size_t perft_result = Perft(depth - 1);
                 std::cout << ": " << perft_result << std::endl;
                 moves_count += perft_result;
@@ -280,7 +275,7 @@ uint64_t GameState::SplitPerft(std::size_t depth)
             {
                 ++moves_count;
                 std::cout << std::endl << idx << ": ";
-                lg.PrintMove(*move);
+                //lg.PrintMove(*move);
             }
 
             moves_.UnmakeMove(*move);
@@ -293,7 +288,7 @@ uint64_t GameState::SplitPerft(std::size_t depth)
 
 void GameState::SpeedPerft()
 {
-    Logger lg;
+    //Logger lg;
 
     std::array<std::string, 5> positions = {"r3k2r/8/8/8/3pPp2/8/8/R3K1RR b KQkq e3",
                                              "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq -", "8/3K4/2p5/p2b2r1/5k2/8/8/1q6 b - -",
@@ -386,7 +381,7 @@ std::string PrintMove(std::size_t &move)
 
 int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
 {
-    if(!time_out)
+    if(!time_out || (stop_ && *stop_))
     {
         if(depth == 0)
             return active_side_ == Side::kWhite ? evaluator_.Score() : -evaluator_.Score();
@@ -404,11 +399,14 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
             moves_.GetBlackMoves(&move_list);
         }
 
-        int score = -kMateScore;
+        std::array<std::size_t, kMaxPVLineSize> local_pv_line{};
 
+        int score = -kMateScore + current_depth_;
         std::size_t *move = nullptr;
-        int current_score;
         std::size_t best_move = 0;
+        int current_score;
+
+        ++current_depth_;
 
         while((move = move_list.GetNextMove()))
         {
@@ -417,40 +415,40 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
                 current_score = score;
                 ++nodes;
 
-                ++pv_line;
-                score = std::max(score, -NegaMax(depth - 1, pv_line));
-                --pv_line;
+                score = std::max(score, -NegaMax(depth - 1, &local_pv_line[0]));
 
                 if(score != current_score)
                 {
                     best_move = *move;
-                    *pv_line = *move;
+
+                    if(local_pv_line.size())
+                        std::copy_if(std::begin(local_pv_line), std::end(local_pv_line), &pv_line[1], [](const std::size_t m){return m > 0;});
                 }
 
                 moves_.UnmakeMove(*move);
             }
         }
 
-        if (!(nodes & 16383))
-            time_out = time_out || !TimeManager::GetInstance().CheckTime();
+        --current_depth_;
 
-        if(time_out)
-            return {};
+        if(best_move)
+            pv_line[0] = best_move;
 
         if(!best_move && !moves_.IsKingAttacked())
             score = 0;
 
-        if(score >= -kMateScore && score < -kHighestScore)
-            ++score;
+        if (!(nodes & 16383))
+            time_out = time_out || !TimeManager::GetInstance().CheckTime();
 
         return score;
     }
+
     return {};
 }
 
 void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
 {
-    std::array<std::size_t, 256> pv_line{};
+    std::array<std::size_t, kMaxPVLineSize> pv_line{};
     stop_ = stop;
     std::size_t best_move = 0;
 
@@ -459,7 +457,9 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
 
     for(std::size_t iterative_depth = 0; iterative_depth <= depth; ++iterative_depth)
     {
-        NegaMax(iterative_depth, &pv_line[0]);
+        current_depth_ = 0;
+
+        /*std::cout << */NegaMax(iterative_depth, &pv_line[0])/* << std::endl*/;
         best_move = pv_line[0];
 
 //        for(auto move : pv_line)
@@ -470,17 +470,27 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
 //            PrintMove(move);
 //            std::cout << "  ";
 //        }
-        if(*stop_ || time_out)
+        if((stop_ && *stop_) || time_out)
             break;
 
-        //std::cout << iterative_depth << std::endl;
+
+//        for(auto move : pv_line)
+//        {
+//            if(!move)
+//                break;
+
+//            std::cout << PrintMove(move) << " ";
+//        }
+
+//        std::cout << std::endl;
     }
 
 //    std::ofstream myfile;
 //    myfile.open ("log_out.txt", std::ios::app);
 //    myfile << "bestmove " << PrintMove(best_move) << std::endl;
 
-    std::cout << "bestmove " << PrintMove(best_move) << std::endl;
+    //Logger::GetInstance("log.txt") << "bestmove " << PrintMove(best_move);
+    std::cout << "bestmove " << PrintMove(pv_line[0]) << std::endl;
 
 //    myfile.close();
 

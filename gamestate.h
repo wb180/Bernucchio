@@ -49,7 +49,9 @@ private:
 
     std::atomic<bool> *stop_;
     bool time_out = false;
+
     uint64_t nodes;
+    std::size_t current_depth_;
 };
 
 #endif // GAMESTATE_H

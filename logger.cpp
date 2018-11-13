@@ -6,25 +6,25 @@
 #include <bitset>
 #include <iostream>
 
-Logger::Logger() : output_(&std::cout), type_(LoggerType::kCout)
+Logger::Logger(std::string file_name) : output_(nullptr), type_(!file_name.empty() ? LoggerType::kFile : LoggerType::kCout)
 {
-
-}
-
-Logger::Logger(std::string file_name) : output_(nullptr), type_(LoggerType::kFile)
-{
-    file_stream = std::make_unique<std::ofstream>();
-
-    if(file_stream)
-        file_stream->open(file_name);
-
-    if( !file_stream || !file_stream->is_open() )
+    if(!file_name.empty())
     {
-        std::cerr << "Could not open the file: " << file_name << std::endl;
-        /*quick_*/exit (EXIT_FAILURE);
+        file_stream = std::make_unique<std::ofstream>();
+
+        if(file_stream)
+            file_stream->open(file_name, std::ios_base::app);
+
+        if( !file_stream || !file_stream->is_open() )
+        {
+            std::cerr << "Could not open the file: " << file_name << std::endl;
+            /*quick_*/exit (EXIT_FAILURE);
+        }
+        else
+            output_ = file_stream.get();
     }
     else
-        output_ = file_stream.get();
+        output_ = &std::cout;
 }
 
 Logger::~Logger()
@@ -89,6 +89,12 @@ Logger &Logger::operator<<(const Board &board)
     *output_ << "- - - - - - - - - - " << std::endl;
     *output_ << "     a b c d e f g h" << std::endl << std::endl;
 
+    return *this;
+}
+
+Logger &Logger::operator<<(const std::string &string)
+{
+    *output_ << string << std::endl;
     return *this;
 }
 

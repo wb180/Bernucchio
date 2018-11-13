@@ -9,19 +9,33 @@
 
 class Logger
 {
-public:
+private:
     enum class LoggerType
     {
         kCout,
         kFile
     };
 
-    Logger();
     explicit Logger(std::string file_name);
+
+public:
+    static Logger& GetInstance(std::string file_name = "")
+    {
+        static Logger logger{ file_name };
+        return logger;
+    }
+
+    Logger(const Logger&) = delete;
+    Logger(Logger&&) = delete;
+    Logger& operator=(const Logger&) = delete;
+    Logger& operator=(Logger&&) = delete;
+
     ~Logger();
 
     Logger& operator<< (const uint64_t& bit_board);
     Logger& operator<< (const Board& board);
+
+    Logger& operator<< (const std::string& string);
 
     void PrintMove(std::size_t &move);
 

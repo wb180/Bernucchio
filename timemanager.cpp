@@ -42,7 +42,7 @@ void TimeManager::CalculateTime()
     }
     else
     {
-        move_time = static_cast<uint64_t>(our_time_ / 40 + 0.75 * our_increment_);
+        move_time = static_cast<uint64_t>(our_time_ / 40 + 0.5 * our_increment_);
     }
 
     finish_time =  std::chrono::steady_clock::now() + std::chrono::milliseconds {move_time};
