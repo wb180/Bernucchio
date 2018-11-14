@@ -27,6 +27,7 @@ public:
     void UnmakeMove(std::size_t move);
 
     bool IsKingAttacked() const;
+    void Reset();
 
 private:
     Board *board_;

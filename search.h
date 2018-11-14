@@ -17,7 +17,7 @@ public:
 
     bool SetFen(const std::string &fen_string);
     bool MakeMove(const std::string &move);
-    Side GetOurSide() const;
+    Side GetOurSide();
 
     ~Search();
 

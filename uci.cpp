@@ -36,11 +36,13 @@ void UCI::Loop()
     std::string token;
     std::size_t number_value;
 
-    Logger::GetInstance("log.txt") << "New Instance";
+    //Logger::GetInstance("log.txt") << "New Instance";
+
+    //std::ifstream f("log.txt");
 
     while(std::getline(std::cin, command))
     {
-       Logger::GetInstance("log.txt") << command;
+        //Logger::GetInstance("log.txt") << command;
 
         std::istringstream ss{ command };
         ss >> token;
@@ -49,7 +51,7 @@ void UCI::Loop()
           break;
         else if(token == kUci)
         {
-            std::cout << "id name Bernucchio 11132018" << std::endl
+            std::cout << "id name Bernucchio " << __TIMESTAMP__ << std::endl
                       << "id author WirBrauchen180" << std::endl
                       << "uciok" << std::endl;
 
@@ -68,7 +70,12 @@ void UCI::Loop()
             if(token == kFen)
             {
                 while(ss >> token && token != kMoves)
+                {
+                    if(!fen.empty())
+                        fen.append(" ");
+
                     fen.append(token);
+                }
             }
             else
             {
@@ -79,7 +86,7 @@ void UCI::Loop()
             if(!Searches::GetInstance().GetMainThread()->SetFen(fen))
             {
                 std::cerr << "Exception: Wrong fen string: " << fen << std::endl;
-                std::exit(1);
+                //std::exit(1);
             }
 
             if(token == kMoves)
@@ -87,8 +94,8 @@ void UCI::Loop()
                 while(ss >> token)
                     if(!Searches::GetInstance().GetMainThread()->MakeMove(token))
                     {
-                        std::cerr << "Exception: Illegal move: " << token << std::endl;
-                        std::exit(1);
+                        //Logger::GetInstance() << "Exception: Illegal move: " << token;
+                        //std::exit(1);
                     }
             }
         }

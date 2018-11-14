@@ -3,19 +3,20 @@
 #include "logger.h"
 #include "moves.h"
 
-//#include <stack>
+#include <stack>
 
 #include <iostream>
 
 static std::array<std::array<uint64_t, 512>, kBitBoardSize> bishop_moves;
 static std::array<std::array<uint64_t, 4096>, kBitBoardSize> rook_moves;
 
+//static std::stack<MoveInfo*> control;
+
 //static std::stack<std::pair<Board, std::size_t> > control;
 
 Moves::Moves(Board *board, uint64_t *en_passant, std::size_t *castling_rights, Side *side) : board_(board), en_passant_(en_passant),
     castling_rights_(castling_rights), active_side_(side)
 {
-    last_move_ = &move_infos[0];
 }
 
 void Moves::GetWhiteKingAttacks(MoveList *move_list)
@@ -817,6 +818,10 @@ bool Moves::MakeMove(std::size_t move)
     last_move_->old_en_passant_ = *en_passant_;
     last_move_->captured_ = captured;
 
+    //Logger::GetInstance() << "MakeMove";
+
+    //control.push(last_move_);
+
     ++last_move_;
 
     if(*en_passant_)
@@ -1000,6 +1005,19 @@ void Moves::UnmakeMove(std::size_t move)
 //    }
 
     --last_move_;
+
+//    if( control.top() != last_move_ )
+//    {
+//        Logger::GetInstance() << "UnMakeMove";
+//    }
+
+//    control.pop();
+
+    /*
+    if(last_move_ < &move_infos[0])
+    {
+        Logger::GetInstance();
+    }*/
 
     if(!(*active_side_))
     {
@@ -1272,6 +1290,12 @@ void Moves::UnmakeMove(std::size_t move)
 bool Moves::IsKingAttacked() const
 {
     return IsSquareAttacked(*active_side_ ? GetLSBPos(board_->white_king_) : GetLSBPos(board_->black_king_) );
+}
+
+void Moves::Reset()
+{
+    last_move_ = &move_infos[0];
+    //control = {};
 }
 
 bool Moves::IsSquareAttacked(std::size_t square) const

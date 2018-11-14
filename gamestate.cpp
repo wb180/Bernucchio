@@ -21,6 +21,8 @@ bool GameState::SetFen(const std::string &fen_string)
 
     bool result = board_.SetFen(fen_string);
 
+    moves_.Reset();
+
     if(result)
     {
         std::size_t position = fen_string.find(' ');
@@ -146,9 +148,15 @@ bool GameState::MakeMove(const std::string &move_string)
 {
     std::size_t move = moves_.GetMove(move_string);
 
+    //Logger::GetInstance() << GetFen();
+
     if(move)
     {
-        return moves_.MakeMove(move);
+        auto r = moves_.MakeMove(move);
+//        if(r)
+//            Logger::GetInstance() << "MakeMove in SetFen";
+
+        return r;
     }
 
     return false;
@@ -419,7 +427,7 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
 
                 if(score != current_score)
                 {
-                    best_move = *move;
+                    best_move = pv_line[0] = *move;
 
                     if(local_pv_line.size())
                         std::copy_if(std::begin(local_pv_line), std::end(local_pv_line), &pv_line[1], [](const std::size_t m){return m > 0;});
@@ -467,9 +475,10 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
 //            if(!move)
 //                break;
 
-//            PrintMove(move);
+//            std:: cout << PrintMove(move);
 //            std::cout << "  ";
 //        }
+
         if((stop_ && *stop_) || time_out)
             break;
 

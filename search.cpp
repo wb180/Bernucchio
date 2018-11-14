@@ -9,16 +9,19 @@ Search::Search() : thread_(&Search::Loop, this)
 
 bool Search::SetFen(const std::string &fen_string)
 {
+    Wait();
     return state_.SetFen(fen_string);
 }
 
 bool Search::MakeMove(const std::string &move)
 {
+    Wait();
     return state_.MakeMove(move);
 }
 
-Side Search::GetOurSide() const
+Side Search::GetOurSide()
 {
+    Wait();
     return state_.GetSide();
 }
 
