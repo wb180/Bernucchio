@@ -1329,9 +1329,9 @@ std::size_t Moves::GetMove(const std::string &move_string)
             if((*castling_rights_ & Castlings::kWhiteCastling_0_0_0) && (board_->white_rooks_ & FieldBitboard::kA1) )
                 move = from | (to << 6) | MoveFlags::kCastling;
         }
-        else if(*en_passant_ && (to_bitboard & board_->empty_) && (to_bitboard >>= kMoveForward) & *en_passant_)
+        else if(*en_passant_ && (from_bitboard & board_->white_pawns_) && (to_bitboard & *en_passant_) )
         {
-            if(from_bitboard & board_->white_pawns_)
+            if((to_bitboard & board_->empty_) && ((to_bitboard >>= kMoveForward) & board_->black_pawns_) )
                 move = from | (to << 6) | MoveFlags::kEnPassant;
         }
         else if(move_string.size() == 5)
@@ -1370,9 +1370,9 @@ std::size_t Moves::GetMove(const std::string &move_string)
             if((*castling_rights_ & Castlings::kBlackCastling_0_0_0) && (board_->black_rooks_ & FieldBitboard::kA8) )
                 move = from | (to << 6) | MoveFlags::kCastling;
         }
-        else if(*en_passant_ && (to_bitboard & board_->empty_) && (to_bitboard >>= kMoveForward) & *en_passant_)
+        else if(*en_passant_ && (from_bitboard & board_->black_pawns_) && (to_bitboard & *en_passant_))
         {
-            if(from_bitboard & board_->black_pawns_)
+            if((to_bitboard & board_->empty_) && ((to_bitboard <<= kMoveForward) & board_->white_pawns_) )
                 move = from | (to << 6) | MoveFlags::kEnPassant;
         }
         else if(move_string.size() == 5)
