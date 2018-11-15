@@ -14,8 +14,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
     InitializeBishopMoves();
     InitializeRookMoves();
 
-    std::srand(std::time(0));
-
 #ifdef BUILD_WITH_TESTS
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();

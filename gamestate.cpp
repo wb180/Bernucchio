@@ -463,12 +463,15 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
     time_out = false;
     nodes = 0;
 
+    int score;
+
+    auto time_start = std::chrono::steady_clock::now();
+
     for(std::size_t iterative_depth = 0; iterative_depth <= depth; ++iterative_depth)
     {
         current_depth_ = 0;
 
-        /*std::cout << */NegaMax(iterative_depth, &pv_line[0])/* << std::endl*/;
-        best_move = pv_line[0];
+        score = NegaMax(iterative_depth, &pv_line[0]);
 
 //        for(auto move : pv_line)
 //        {
@@ -481,6 +484,30 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
 
         if((stop_ && *stop_) || time_out)
             break;
+        else
+        {
+            std::cout << "info depth " << iterative_depth << " time " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time_start).count()  <<
+                         " nodes " << nodes << " pv ";
+
+            for(auto move : pv_line)
+            {
+                if(!move)
+                    break;
+
+                std::cout << PrintMove(move) << " ";
+            }
+
+            std::cout << " score ";
+
+            if(score > kHighestScore || score < -kHighestScore)
+            {
+                std::cout << "mate " << (score > 0 ? (kMateScore - score)/2 + 1 : (-score - kMateScore)/ 2) << std::endl;
+            }
+            else
+                std::cout << "cp " << score << std::endl;
+
+            best_move = pv_line[0];
+        }
 
 
 //        for(auto move : pv_line)
@@ -499,7 +526,7 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
 //    myfile << "bestmove " << PrintMove(best_move) << std::endl;
 
     //Logger::GetInstance("log.txt") << "bestmove " << PrintMove(best_move);
-    std::cout << "bestmove " << PrintMove(pv_line[0]) << std::endl;
+    std::cout << "bestmove " << PrintMove(best_move) << std::endl;
 
 //    myfile.close();
 

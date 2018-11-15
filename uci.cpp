@@ -51,7 +51,7 @@ void UCI::Loop()
           break;
         else if(token == kUci)
         {
-            std::cout << "id name Bernucchio " << __TIMESTAMP__ << std::endl
+            std::cout << "id name Bernucchio " << "0000001" << std::endl
                       << "id author WirBrauchen180" << std::endl
                       << "uciok" << std::endl;
 
