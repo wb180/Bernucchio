@@ -21,13 +21,14 @@ public:
 
     ~Search();
 
-    void Start();
+    void StartSearch();
     void Stop();
 
 private:
     void Loop();
     void RunSearch();
     void Wait();
+    void Start();
 
     bool exit_ = false;
     bool start_search_ = false;

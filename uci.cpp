@@ -36,7 +36,7 @@ void UCI::Loop()
     std::string token;
     std::size_t number_value;
 
-    Logger::GetInstance("log.txt") << "New Instance";
+    //Logger::GetInstance("log_2.txt") << "New Instance";
 
     //std::ifstream f("log.txt");
 
@@ -45,7 +45,7 @@ void UCI::Loop()
 //        if(command.empty())
 //            continue;
 
-        Logger::GetInstance("log.txt") << command;
+        //Logger::GetInstance("log.txt") << command;
 
         std::istringstream ss{ command };
         ss >> token;
@@ -56,14 +56,14 @@ void UCI::Loop()
         {
             std::ostringstream ss;
 
-            ss << "id name Bernucchio " << "0000001" << std::endl
+            ss << "id name Bernucchio " << "0000003" << std::endl
                       << "id author WirBrauchen180" << std::endl
                       << "uciok" << std::endl;
 
             std::cout << ss.str();
             std::flush(std::cout);
 
-            Logger::GetInstance("log.txt") << ss.str();
+            //Logger::GetInstance("log.txt") << ss.str();
         }
         else if(token == kIsReady)
         {
@@ -72,7 +72,7 @@ void UCI::Loop()
             std::cout << ss.str();
             std::flush(std::cout);
 
-            Logger::GetInstance("log.txt") << ss.str();
+            //Logger::GetInstance("log.txt") << ss.str();
         }
         else if(token == kPosition)
         {
@@ -145,7 +145,7 @@ void UCI::Loop()
             if(token != kInfinite)
                 TimeManager::GetInstance().CalculateTime();
 
-            Searches::GetInstance().GetMainThread()->Start();
+            Searches::GetInstance().GetMainThread()->StartSearch();
         }
         else if(token == kStop)
         {

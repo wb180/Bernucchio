@@ -390,7 +390,7 @@ std::string PrintMove(std::size_t &move)
 
 int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
 {
-    if(!time_out || (stop_ && *stop_))
+    if(found_any_move_ && (!time_out || (stop_ && *stop_)))
     {
         if(depth == 0)
             return active_side_ == Side::kWhite ? evaluator_.Score() : -evaluator_.Score();
@@ -446,7 +446,7 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
         if(!best_move && !moves_.IsKingAttacked())
             score = 0;
 
-        if (!(nodes & 16383))
+        if(found_any_move_ && !(nodes & 16383))
             time_out = time_out || !TimeManager::GetInstance().CheckTime();
 
         return score;
@@ -467,6 +467,7 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
     int score;
 
     auto time_start = std::chrono::steady_clock::now();
+    found_any_move_ = false;
 
     for(std::size_t iterative_depth = 0; iterative_depth <= depth; ++iterative_depth)
     {
@@ -483,9 +484,9 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
 //            std::cout << "  ";
 //        }
 
-        if((stop_ && *stop_) || time_out)
+        if( found_any_move_ && ((stop_ && *stop_) || time_out))
             break;
-        else if(iterative_depth)
+        else
         {
             std::ostringstream ss;
 
@@ -509,13 +510,14 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
             else
                 ss << "cp " << score << std::endl;
 
-            Logger::GetInstance("log.txt") << ss.str();
+            //Logger::GetInstance("log.txt") << ss.str();
 
             std::cout << ss.str();
             std::flush(std::cout);
 
 
             best_move = pv_line[0];
+            found_any_move_ = true;
         }
 
 
@@ -543,7 +545,7 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
         std::cout << ss.str();
         std::flush(std::cout);
 
-        Logger::GetInstance("log.txt") << ss.str();
+        //Logger::GetInstance("log.txt") << ss.str();
     }
 
 //    myfile.close();

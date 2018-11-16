@@ -50,6 +50,8 @@ private:
     std::atomic<bool> *stop_;
     bool time_out = false;
 
+    bool found_any_move_;
+
     uint64_t nodes;
     std::size_t current_depth_;
 };
