@@ -2,6 +2,7 @@
 #include "search.h"
 #include "timemanager.h"
 #include "uci.h"
+#include "version.h"
 
 #include <fstream>
 
@@ -56,7 +57,7 @@ void UCI::Loop()
         {
             std::ostringstream ss;
 
-            ss << "id name Bernucchio " << "0000003" << std::endl
+            ss << "id name Bernucchio " << GIT_COMMIT_HASH << std::endl
                       << "id author WirBrauchen180" << std::endl
                       << "uciok" << std::endl;
 

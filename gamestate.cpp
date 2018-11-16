@@ -390,7 +390,7 @@ std::string PrintMove(std::size_t &move)
 
 int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
 {
-    if(found_any_move_ && (!time_out || (stop_ && *stop_)))
+    if(!found_any_move_ || ((stop_ && !*stop_) && !time_out))
     {
         if(depth == 0)
             return active_side_ == Side::kWhite ? evaluator_.Score() : -evaluator_.Score();
@@ -408,7 +408,7 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
             moves_.GetBlackMoves(&move_list);
         }
 
-        std::array<std::size_t, kMaxPVLineSize> local_pv_line{};
+        std::array<std::size_t, kMaxPVLineSize> local_pv_line;
 
         int score = -kMateScore + static_cast<int>(current_depth_);
         std::size_t *move = nullptr;
@@ -430,8 +430,11 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
                 {
                     best_move = pv_line[0] = *move;
 
-                    if(local_pv_line.size())
-                        std::copy_if(std::begin(local_pv_line), std::end(local_pv_line), &pv_line[1], [](const std::size_t m){return m > 0;});
+                    std::size_t idx = 1;
+
+                    while((pv_line[idx] = local_pv_line[idx - 1]))
+                        ++idx;
+
                 }
 
                 moves_.UnmakeMove(*move);
@@ -442,9 +445,13 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
 
         if(best_move)
             pv_line[0] = best_move;
+        else
+        {
+            if(!moves_.IsKingAttacked())
+                score = 0;
 
-        if(!best_move && !moves_.IsKingAttacked())
-            score = 0;
+            pv_line[0] = 0;
+        }
 
         if(found_any_move_ && !(nodes & 16383))
             time_out = time_out || !TimeManager::GetInstance().CheckTime();

@@ -43,8 +43,21 @@ SET(OTHER readme.md)
 
 SET(LIBS ${LIBS} pthread)
 
-#ADD_CUSTOM_TARGET(INVALIDATE_FILES ALL
-#                  COMMAND ${CMAKE_COMMAND} -E touch uci.cpp)
+execute_process(
+  COMMAND git rev-parse -q HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_COMMIT_HASH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+add_definitions(-DGIT_COMMIT_HASH="${GIT_COMMIT_HASH}")
+
+configure_file(
+  ${CMAKE_SOURCE_DIR}/version.h.in
+  ${CMAKE_BINARY_DIR}/generated/version.h
+)
+
+include_directories(${CMAKE_BINARY_DIR}/generated)
 
 ADD_EXECUTABLE(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${LIBS})
