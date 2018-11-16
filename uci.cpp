@@ -57,7 +57,7 @@ void UCI::Loop()
         {
             std::ostringstream ss;
 
-            ss << "id name Bernucchio " << GIT_COMMIT_HASH << std::endl
+            ss << "id name Bernucchio " << GIT_COMMIT_STAMP << GIT_COMMIT_HASH << std::endl
                       << "id author WirBrauchen180" << std::endl
                       << "uciok" << std::endl;
 

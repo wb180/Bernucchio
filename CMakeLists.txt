@@ -44,13 +44,24 @@ SET(OTHER readme.md)
 SET(LIBS ${LIBS} pthread)
 
 execute_process(
-  COMMAND git rev-parse -q HEAD
+  COMMAND git log -1 --format=%h
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE GIT_COMMIT_HASH
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+execute_process(
+  COMMAND git log -1 --format=%at
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_COMMIT_STAMP
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 add_definitions(-DGIT_COMMIT_HASH="${GIT_COMMIT_HASH}")
+add_definitions(-DGIT_COMMIT_STAMP="${GIT_COMMIT_STAMP}")
+
+ADD_CUSTOM_TARGET(INVALIDATE_FILES ALL
+                  COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/uci.cpp)
 
 configure_file(
   ${CMAKE_SOURCE_DIR}/version.h.in

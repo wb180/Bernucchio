@@ -390,7 +390,7 @@ std::string PrintMove(std::size_t &move)
 
 int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
 {
-    if(!found_any_move_ || ((stop_ && !*stop_) && !time_out))
+    if(!found_any_move_ || !((stop_ && *stop_) || time_out))
     {
         if(depth == 0)
             return active_side_ == Side::kWhite ? evaluator_.Score() : -evaluator_.Score();
@@ -453,10 +453,87 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
             pv_line[0] = 0;
         }
 
-        if(found_any_move_ && !(nodes & 16383))
+        if(!(nodes & 16383))
             time_out = time_out || !TimeManager::GetInstance().CheckTime();
 
         return score;
+    }
+
+    return {};
+}
+
+int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv_line)
+{
+    if(!found_any_move_ || !((stop_ && *stop_) || time_out))
+    {
+        if(depth == 0)
+            return active_side_ == Side::kWhite ? evaluator_.Score() : -evaluator_.Score();
+
+        MoveList move_list;
+
+        if(active_side_)
+        {
+            moves_.GetWhiteAttacksAndPromotions(&move_list);
+            moves_.GetWhiteMoves(&move_list);
+        }
+        else
+        {
+            moves_.GetBlackAttacksAndPromotions(&move_list);
+            moves_.GetBlackMoves(&move_list);
+        }
+
+        std::array<std::size_t, kMaxPVLineSize> local_pv_line;
+
+        int score = -kMateScore + static_cast<int>(current_depth_);
+        std::size_t *move = nullptr;
+        std::size_t best_move = 0;
+
+        ++current_depth_;
+
+        while((move = move_list.GetNextMove()))
+        {
+            if(moves_.MakeMove(*move))
+            {
+                ++nodes;
+                score = -AlphaBeta(depth - 1, -beta, -alpha, &local_pv_line[0]);
+                moves_.UnmakeMove(*move);
+            }
+
+            if(score >= beta)
+            {
+                --current_depth_;
+                return beta;
+            }
+
+            if(score > alpha)
+            {
+                alpha = score;
+
+                best_move = pv_line[0] = *move;
+
+                std::size_t idx = 1;
+
+                while((pv_line[idx] = local_pv_line[idx - 1]))
+                    ++idx;
+            }
+        }
+
+        --current_depth_;
+
+        if(best_move)
+            pv_line[0] = best_move;
+        else
+        {
+            if(!moves_.IsKingAttacked())
+                score = 0;
+
+            pv_line[0] = 0;
+        }
+
+        if(!(nodes & 32767))
+            time_out = time_out || !TimeManager::GetInstance().CheckTime();
+
+        return alpha;
     }
 
     return {};
@@ -480,7 +557,7 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
     {
         current_depth_ = 0;
 
-        score = NegaMax(iterative_depth, &pv_line[0]);
+        score = AlphaBeta(iterative_depth, -kMateScore, kMateScore, &pv_line[0]);
 
 //        for(auto move : pv_line)
 //        {

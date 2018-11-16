@@ -2,5 +2,6 @@
 #define VERSION_H
 
 #define GIT_COMMIT_HASH "@GIT_COMMIT_HASH@"
+#define GIT_COMMIT_STAMP "@GIT_COMMIT_STAMP@"
 
 #endif
