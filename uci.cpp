@@ -36,13 +36,16 @@ void UCI::Loop()
     std::string token;
     std::size_t number_value;
 
-    //Logger::GetInstance("log.txt") << "New Instance";
+    Logger::GetInstance("log.txt") << "New Instance";
 
     //std::ifstream f("log.txt");
 
     while(std::getline(std::cin, command))
     {
-        //Logger::GetInstance("log.txt") << command;
+//        if(command.empty())
+//            continue;
+
+        Logger::GetInstance("log.txt") << command;
 
         std::istringstream ss{ command };
         ss >> token;
@@ -51,16 +54,25 @@ void UCI::Loop()
           break;
         else if(token == kUci)
         {
-            std::cout << "id name Bernucchio " << "0000001" << std::endl
+            std::ostringstream ss;
+
+            ss << "id name Bernucchio " << "0000001" << std::endl
                       << "id author WirBrauchen180" << std::endl
                       << "uciok" << std::endl;
 
+            std::cout << ss.str();
             std::flush(std::cout);
+
+            Logger::GetInstance("log.txt") << ss.str();
         }
         else if(token == kIsReady)
         {
-            std::cout << "readyok" << std::endl;
+            std::ostringstream ss;
+            ss << "readyok" << std::endl;
+            std::cout << ss.str();
             std::flush(std::cout);
+
+            Logger::GetInstance("log.txt") << ss.str();
         }
         else if(token == kPosition)
         {

@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <chrono>
+#include <sstream>
 
 GameState::GameState() : moves_(&board_, &en_passant_, &castlings_, &active_side_), hashes_(&board_), evaluator_(&board_)
 {
@@ -409,7 +410,7 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
 
         std::array<std::size_t, kMaxPVLineSize> local_pv_line{};
 
-        int score = -kMateScore + current_depth_;
+        int score = -kMateScore + static_cast<int>(current_depth_);
         std::size_t *move = nullptr;
         std::size_t best_move = 0;
         int current_score;
@@ -484,9 +485,11 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
 
         if((stop_ && *stop_) || time_out)
             break;
-        else
+        else if(iterative_depth)
         {
-            std::cout << "info depth " << iterative_depth << " time " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time_start).count()  <<
+            std::ostringstream ss;
+
+            ss << "info depth " << iterative_depth << " time " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time_start).count()  <<
                          " nodes " << nodes << " pv ";
 
             for(auto move : pv_line)
@@ -494,17 +497,23 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
                 if(!move)
                     break;
 
-                std::cout << PrintMove(move) << " ";
+                ss << PrintMove(move) << " ";
             }
 
-            std::cout << " score ";
+            ss << " score ";
 
             if(score > kHighestScore || score < -kHighestScore)
             {
-                std::cout << "mate " << (score > 0 ? (kMateScore - score)/2 + 1 : (-score - kMateScore)/ 2) << std::endl;
+                ss << "mate " << (score > 0 ? (kMateScore - score)/2 + 1 : (-score - kMateScore)/ 2) << std::endl;
             }
             else
-                std::cout << "cp " << score << std::endl;
+                ss << "cp " << score << std::endl;
+
+            Logger::GetInstance("log.txt") << ss.str();
+
+            std::cout << ss.str();
+            std::flush(std::cout);
+
 
             best_move = pv_line[0];
         }
@@ -526,7 +535,16 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
 //    myfile << "bestmove " << PrintMove(best_move) << std::endl;
 
     //Logger::GetInstance("log.txt") << "bestmove " << PrintMove(best_move);
-    std::cout << "bestmove " << PrintMove(best_move) << std::endl;
+
+    if(best_move)
+    {
+        std::ostringstream ss;
+        ss << "bestmove " << PrintMove(best_move) << std::endl;
+        std::cout << ss.str();
+        std::flush(std::cout);
+
+        Logger::GetInstance("log.txt") << ss.str();
+    }
 
 //    myfile.close();
 
