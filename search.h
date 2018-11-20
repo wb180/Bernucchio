@@ -15,30 +15,37 @@ class Search
 public:
     Search();
 
+    enum class States
+    {
+        kQuit,
+        kWait,
+        kWork
+    };
+
     bool SetFen(const std::string &fen_string);
     bool MakeMove(const std::string &move);
     Side GetOurSide();
 
     ~Search();
-
-    void StartSearch();
+    void Wake();
+    void Wait();
     void Stop();
 
 private:
     void Loop();
-    void RunSearch();
-    void Wait();
+    void RunSearch();    
     void Start();
 
+
     bool exit_ = false;
-    bool start_search_ = false;
+    States state_;
     std::atomic<bool> stop_;
 
     std::condition_variable condition_variable_;
     std::thread thread_;
     std::mutex mutex_;    
 
-    GameState state_;
+    GameState gamestate_;
 };
 
 class Searches

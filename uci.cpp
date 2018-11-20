@@ -39,7 +39,7 @@ void UCI::Loop()
 
     //Logger::GetInstance("log_2.txt") << "New Instance";
 
-    //std::ifstream f("log.txt");
+//    std::ifstream f("log.txt");
 
     while(std::getline(std::cin, command))
     {
@@ -57,7 +57,7 @@ void UCI::Loop()
         {
             std::ostringstream ss;
 
-            ss << "id name Bernucchio " << GIT_COMMIT_STAMP << GIT_COMMIT_HASH << std::endl
+            ss << "id name Bernucchio " << GIT_VERSION << std::endl
                       << "id author WirBrauchen180" << std::endl
                       << "uciok" << std::endl;
 
@@ -77,6 +77,8 @@ void UCI::Loop()
         }
         else if(token == kPosition)
         {
+            Searches::GetInstance().GetMainThread()->Wait();
+
             std::string fen;
             ss >> token;
 
@@ -114,6 +116,8 @@ void UCI::Loop()
         }
         else if(token == kGo)
         {
+            Searches::GetInstance().GetMainThread()->Wait();
+
             while(ss >> token)
             {
                 if(token == kWTime || token == kBTime)
@@ -144,9 +148,15 @@ void UCI::Loop()
             }
 
             if(token != kInfinite)
+            {
                 TimeManager::GetInstance().CalculateTime();
-
-            Searches::GetInstance().GetMainThread()->StartSearch();
+                Searches::GetInstance().GetMainThread()->Wake();
+            }
+            else if(token == kInfinite)
+            {
+                TimeManager::GetInstance().SetInfinite(true);
+                Searches::GetInstance().GetMainThread()->Wake();
+            }
         }
         else if(token == kStop)
         {

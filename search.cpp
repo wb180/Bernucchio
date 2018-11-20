@@ -3,63 +3,43 @@
 
 #include <iostream>
 
-Search::Search() : thread_(&Search::Loop, this)
+Search::Search() : state_(States::kWait)
 {
-    //Logger::GetInstance("log.txt") << "Wait for search finished in Constructor";
-    Wait();
-    //Logger::GetInstance("log.txt") << "Search finished in Constructor";
+    thread_ = std::thread(&Search::Loop, this);
 }
 
 bool Search::SetFen(const std::string &fen_string)
 {
-    //Logger::GetInstance("log.txt") << "Wait for search finished in SetFen";
-    Wait();
-    //Logger::GetInstance("log.txt") << "Search finished in SetFen";
-    return state_.SetFen(fen_string);
+    return gamestate_.SetFen(fen_string);
 }
 
 bool Search::MakeMove(const std::string &move)
 {
-    //Logger::GetInstance("log.txt") << "Wait for search finished in MakeMove";
-    Wait();
-    //Logger::GetInstance("log.txt") << "Search finished in MakeMove";
-    return state_.MakeMove(move);
+    return gamestate_.MakeMove(move);
 }
 
 Side Search::GetOurSide()
 {
-    //Logger::GetInstance("log.txt") << "Wait for search finished in GetOurSide";
-    Wait();
-    //Logger::GetInstance("log.txt") << "Search finished in GetOurSide";
-    return state_.GetSide();
+    return gamestate_.GetSide();
 }
 
 Search::~Search()
 {
-    exit_ = true;
-    Start();
-    thread_.join();
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        state_ = States::kQuit;
+        condition_variable_.notify_one();
+    }
+
+    try { thread_.join(); }
+    catch ( const std::system_error& ){ };
 }
 
-void Search::StartSearch()
+void Search::Wake()
 {
-    Wait();
-    Start();
-}
-
-void Search::Start()
-{
-    //Logger::GetInstance("log.txt") << "Start search in Start";
-    //Logger::GetInstance("log.txt") << "Wait for search finished in Start";
-
-    //Wait();
-    //Logger::GetInstance("log.txt") << "Search finished in Start";
-
-    std::scoped_lock<std::mutex> lock(mutex_);
-    start_search_ = true;
+    std::lock_guard<std::mutex> lock(mutex_);
+    state_ = States::kWork;
     condition_variable_.notify_one();
-
-    //Logger::GetInstance("log.txt") << "Exit start search in Start";
 }
 
 void Search::Stop()
@@ -71,39 +51,38 @@ void Search::Loop()
 {
     while(true)
     {
-        //Logger::GetInstance("log.txt") << "Loop in Loop";
-
+      {
         std::unique_lock<std::mutex> lock(mutex_);
-        start_search_ = false;
-        condition_variable_.notify_one();
 
-        //Logger::GetInstance("log.txt") << "Waiting in Loop in Loop";
+        while(state_ == States::kWait)
+        {
+          condition_variable_.wait(lock);
+        }
 
-        condition_variable_.wait(lock, [&]{ return start_search_; });
+        if(state_ == States::kQuit)
+            break;
 
-        //Logger::GetInstance("log.txt") << "Waiting finished in Loop";
+        state_ = States::kWait;
+      }
 
-        if(exit_)
-            return;
-
-        lock.unlock();
-
-        //Logger::GetInstance("log.txt") << "Run search in Loop";
-        RunSearch();
-        //Logger::GetInstance("log.txt") << "Loop search finished in Loop";
+      RunSearch();
     }
 }
 
 void Search::RunSearch()
 {
     stop_ = false;
-    state_.Search(100, &stop_);
+    gamestate_.Search(100, &stop_);
 }
 
 void Search::Wait()
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    condition_variable_.wait(lock, [&]{ return !start_search_; });
+
+    while(state_ != States::kWait)
+    {
+      condition_variable_.wait(lock);
+    }
 }
 
 Searches::Searches(std::size_t threads_number) : search_vector_{threads_number}

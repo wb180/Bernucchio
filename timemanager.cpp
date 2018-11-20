@@ -32,17 +32,23 @@ void TimeManager::SetMovesToGo(std::size_t moves)
     moves_to_go_ = moves;
 }
 
+void TimeManager::SetInfinite(bool is_infinite)
+{
+    is_infinite_ = is_infinite;
+}
+
 void TimeManager::CalculateTime()
 {
     uint64_t move_time;
+    is_infinite_ = false;
 
     if(moves_to_go_)
     {
-        move_time = our_time_ / moves_to_go_ + our_increment_;
+        move_time = static_cast<uint64_t>(our_time_ / moves_to_go_ + 0.6 * our_increment_);
     }
     else
     {
-        move_time = static_cast<uint64_t>(our_time_ / 40 + 0.5 * our_increment_);
+        move_time = static_cast<uint64_t>(our_time_ / 25 + 0.6 * our_increment_);
     }
 
     finish_time =  std::chrono::steady_clock::now() + std::chrono::milliseconds {move_time};
@@ -50,10 +56,10 @@ void TimeManager::CalculateTime()
 
 bool TimeManager::CheckTime() const
 {
-    /*auto t1 = std::chrono::steady_clock::now();
-    auto t2 = finish_time;
+    if(is_infinite_)
+        return true;
 
-    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() << std::endl;*/
+//    std::cout << (std::chrono::steady_clock::now() < finish_time) << std::endl;
 
     return  std::chrono::steady_clock::now() < finish_time;
 }

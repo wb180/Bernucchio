@@ -111,6 +111,8 @@ bool GameState::SetFen(const std::string &fen_string)
             result = false;
     }
 
+//    Logger::GetInstance() << GetFen();
+
     return result;
 }
 
@@ -419,8 +421,15 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
 
         while((move = move_list.GetNextMove()))
         {
+
+//            for(std::size_t i = 0; i < depth; ++i )
+//                std::cout << "-";
+//            std::cout << PrintMove(*move) << std::endl;
+
             if(moves_.MakeMove(*move))
             {
+                //std::cout << GetFen() << std::endl;
+
                 current_score = score;
                 ++nodes;
 
@@ -447,7 +456,7 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
             pv_line[0] = best_move;
         else
         {
-            if(!moves_.IsKingAttacked())
+            if(!moves_.IsKingAttacked(active_side_))
                 score = 0;
 
             pv_line[0] = 0;
@@ -464,6 +473,8 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
 
 int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv_line)
 {
+//    std::cout << found_any_move_ << " " << *stop_ << " " << time_out << std::endl;
+
     if(!found_any_move_ || !((stop_ && *stop_) || time_out))
     {
         if(depth == 0)
@@ -487,6 +498,7 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
         int score = -kMateScore + static_cast<int>(current_depth_);
         std::size_t *move = nullptr;
         std::size_t best_move = 0;
+        bool is_exist = false;
 
         ++current_depth_;
 
@@ -494,27 +506,37 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
         {
             if(moves_.MakeMove(*move))
             {
+                is_exist = true;
+
+//                for(std::size_t i = 0; i < depth; ++i )
+//                    std::cout << "-";
+
+//                std::cout << PrintMove(*move) << " ";
+
                 ++nodes;
                 score = -AlphaBeta(depth - 1, -beta, -alpha, &local_pv_line[0]);
                 moves_.UnmakeMove(*move);
-            }
 
-            if(score >= beta)
-            {
-                --current_depth_;
-                return beta;
-            }
 
-            if(score > alpha)
-            {
-                alpha = score;
+//                 std:: cout << " " << score << std::endl;
 
-                best_move = pv_line[0] = *move;
+                if(score >= beta)
+                {
+                    --current_depth_;
+                    return beta;
+                }
 
-                std::size_t idx = 1;
+                if(score > alpha)
+                {
+                    alpha = score;
 
-                while((pv_line[idx] = local_pv_line[idx - 1]))
-                    ++idx;
+                    best_move = pv_line[0] = *move;
+
+                    std::size_t idx = 1;
+
+                    while((pv_line[idx] = local_pv_line[idx - 1]))
+                        ++idx;
+                }
             }
         }
 
@@ -522,10 +544,12 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
 
         if(best_move)
             pv_line[0] = best_move;
-        else
+        else if(!is_exist)
         {
-            if(!moves_.IsKingAttacked())
-                score = 0;
+            if(!moves_.IsKingAttacked(active_side_))
+                alpha = 0;
+            else
+                alpha = score;
 
             pv_line[0] = 0;
         }
@@ -558,6 +582,7 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
         current_depth_ = 0;
 
         score = AlphaBeta(iterative_depth, -kMateScore, kMateScore, &pv_line[0]);
+        //score = NegaMax(iterative_depth, &pv_line[0]);
 
 //        for(auto move : pv_line)
 //        {

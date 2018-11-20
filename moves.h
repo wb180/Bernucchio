@@ -26,7 +26,8 @@ public:
     bool MakeMove(std::size_t move);
     void UnmakeMove(std::size_t move);
 
-    bool IsKingAttacked() const;
+    bool IsKingAttacked(Side side) const;
+
     void Reset();
 
 private:

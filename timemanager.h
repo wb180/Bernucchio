@@ -22,6 +22,7 @@ public:
     void SetOurIncrement(std::size_t increment);
     void SetOpponentIncrement(std::size_t increment);
     void SetMovesToGo(std::size_t moves);
+    void SetInfinite(bool is_infinite);
 
     void CalculateTime();
     bool CheckTime() const;
@@ -34,6 +35,7 @@ private:
     std::size_t our_increment_;
     std::size_t opponent_increment_;
     std::size_t moves_to_go_;
+    bool is_infinite_ = true;
 
     std::chrono::time_point<std::chrono::steady_clock> finish_time;
 };

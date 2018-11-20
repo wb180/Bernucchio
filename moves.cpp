@@ -275,6 +275,8 @@ bool Moves::MakeMove(std::size_t move)
     bool is_legal = true;
     PieceType captured = PieceType::KAllPieces;
 
+    //Logger::GetInstance() << board_->white_rooks_ << board_->white_bishops_ << board_->GetFen();
+
 //Board save_board = *board_;
 
 //if(move == 4484)
@@ -1287,9 +1289,43 @@ void Moves::UnmakeMove(std::size_t move)
     //    }
 }
 
-bool Moves::IsKingAttacked() const
+bool Moves::IsKingAttacked(Side side) const
 {
-    return IsSquareAttacked(*active_side_ ? GetLSBPos(board_->white_king_) : GetLSBPos(board_->black_king_) );
+    std::size_t square = side == Side::kWhite ? GetLSBPos(board_->white_king_) : GetLSBPos(board_->black_king_);
+
+    if(side == Side::kWhite)
+    {
+        if(rook_moves[square][(((kRookMasks[square] & board_->occupied_) * kRookMagics[square]) >> (kBitBoardSize - GetBitsCount(kRookMasks[square])))] & (board_->black_rooks_))
+            return true;
+
+        if(bishop_moves[square][(((kBishopMasks[square] & board_->occupied_) * kBishopMagics[square]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[square])))] & (board_->black_bishops_))
+            return true;
+
+        if (kKnightMoves[square] & board_->black_knights_)
+            return true;
+
+        if (kWhitePawnsAttacks[square] & board_->black_pawns_)
+            return true;
+    }
+    else
+    {
+//        Logger::GetInstance() << bishop_moves[square][(((kBishopMasks[square] & board_->occupied_) * kBishopMagics[square]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[square])))];
+//        Logger::GetInstance() << board_->white_bishops_;
+
+        if(rook_moves[square][(((kRookMasks[square] & board_->occupied_) * kRookMagics[square]) >> (kBitBoardSize - GetBitsCount(kRookMasks[square])))] & (board_->white_rooks_))
+            return true;
+
+        if(bishop_moves[square][(((kBishopMasks[square] & board_->occupied_) * kBishopMagics[square]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[square])))] & (board_->white_bishops_))
+            return true;
+
+        if (kKnightMoves[square] & board_->white_knights_)
+            return true;
+
+        if (kBlackPawnsAttacks[square] & board_->white_pawns_)
+            return true;
+    }
+
+    return false;
 }
 
 void Moves::Reset()
