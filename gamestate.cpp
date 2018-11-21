@@ -8,7 +8,7 @@
 #include <chrono>
 #include <sstream>
 
-GameState::GameState() : moves_(&board_, &en_passant_, &castlings_, &active_side_), hashes_(&board_), evaluator_(&board_)
+GameState::GameState() : moves_(&board_, &en_passant_, &castlings_, &active_side_, &fifty_moves_counter_), hashes_(&board_), evaluator_(&board_)
 {
 
 }
@@ -158,6 +158,8 @@ bool GameState::MakeMove(const std::string &move_string)
         auto r = moves_.MakeMove(move);
 //        if(r)
 //            Logger::GetInstance() << "MakeMove in SetFen";
+
+//        Logger::GetInstance("log.txt") << GetFen();
 
         return r;
     }
@@ -478,7 +480,9 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
     if(!found_any_move_ || !((stop_ && *stop_) || time_out))
     {
         if(depth == 0)
+        {
             return active_side_ == Side::kWhite ? evaluator_.Score() : -evaluator_.Score();
+        }
 
         MoveList move_list;
 
@@ -499,6 +503,7 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
         std::size_t *move = nullptr;
         std::size_t best_move = 0;
         bool is_exist = false;
+        bool fifty_moves = false;
 
         ++current_depth_;
 
@@ -514,7 +519,7 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
 //                std::cout << PrintMove(*move) << " ";
 
                 ++nodes;
-                score = -AlphaBeta(depth - 1, -beta, -alpha, &local_pv_line[0]);
+                score = (fifty_moves = (fifty_moves_counter_ >= 100)) ? 0 : -AlphaBeta(depth - 1, -beta, -alpha, &local_pv_line[0]);
                 moves_.UnmakeMove(*move);
 
 
@@ -532,10 +537,14 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
 
                     best_move = pv_line[0] = *move;
 
-                    std::size_t idx = 1;
-
-                    while((pv_line[idx] = local_pv_line[idx - 1]))
-                        ++idx;
+                    if(!fifty_moves)
+                    {
+                        std::size_t idx = 1;
+                        while((pv_line[idx] = local_pv_line[idx - 1]))
+                            ++idx;
+                    }
+                    else
+                        pv_line[1] = 0;
                 }
             }
         }
@@ -580,6 +589,8 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
     for(std::size_t iterative_depth = 0; iterative_depth <= depth; ++iterative_depth)
     {
         current_depth_ = 0;
+
+//        std::cout << fifty_moves_counter_ << std::endl;
 
         score = AlphaBeta(iterative_depth, -kMateScore, kMateScore, &pv_line[0]);
         //score = NegaMax(iterative_depth, &pv_line[0]);

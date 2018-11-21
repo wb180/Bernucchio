@@ -9,7 +9,7 @@
 class Moves
 {
 public:
-    explicit Moves(Board *board, uint64_t *en_passant, std::size_t *castling_rights, Side *side);
+    explicit Moves(Board *board, uint64_t *en_passant, std::size_t *castling_rights, Side *side, std::size_t *fifty_moves_counter);
 
     void GetWhiteKingAttacks(MoveList *move_list);
     void GetWhiteKingMoves(MoveList *move_list);
@@ -37,6 +37,7 @@ private:
     Side *active_side_;
     std::array<MoveInfo, 512> move_infos;
     MoveInfo *last_move_;
+    std::size_t *fifty_moves_counter_;
 
     bool IsSquareAttacked(std::size_t square) const;
 };

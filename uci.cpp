@@ -46,7 +46,7 @@ void UCI::Loop()
 //        if(command.empty())
 //            continue;
 
-        //Logger::GetInstance("log.txt") << command;
+//        Logger::GetInstance("log.txt") << command;
 
         std::istringstream ss{ command };
         ss >> token;

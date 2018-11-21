@@ -14,6 +14,7 @@ public:
     std::size_t old_castling_rights_;
     std::size_t old_en_passant_;
     PieceType captured_;
+    std::size_t old_fifty_moves_counter_;
 };
 
 #endif // MOVEINFO_H

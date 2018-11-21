@@ -11,11 +11,11 @@ static std::array<std::array<uint64_t, 512>, kBitBoardSize> bishop_moves;
 static std::array<std::array<uint64_t, 4096>, kBitBoardSize> rook_moves;
 
 //static std::stack<MoveInfo*> control;
-
 //static std::stack<std::pair<Board, std::size_t> > control;
+static std::stack<std::size_t> control;
 
-Moves::Moves(Board *board, uint64_t *en_passant, std::size_t *castling_rights, Side *side) : board_(board), en_passant_(en_passant),
-    castling_rights_(castling_rights), active_side_(side)
+Moves::Moves(Board *board, uint64_t *en_passant, std::size_t *castling_rights, Side *side, std::size_t *fifty_moves_counter) : board_(board), en_passant_(en_passant),
+    castling_rights_(castling_rights), active_side_(side), fifty_moves_counter_(fifty_moves_counter)
 {
 }
 
@@ -820,6 +820,16 @@ bool Moves::MakeMove(std::size_t move)
     last_move_->old_en_passant_ = *en_passant_;
     last_move_->captured_ = captured;
 
+    control.push(*fifty_moves_counter_);
+
+    if(captured != PieceType::KAllPieces || (*active_side_ && (board_->white_pawns_ & to) ) || (!*active_side_ && (board_->black_pawns_ & to) ) )
+    {
+        last_move_->old_fifty_moves_counter_ = *fifty_moves_counter_;
+        *fifty_moves_counter_ = 0;
+    }
+    else
+        *fifty_moves_counter_ += 1;
+
     //Logger::GetInstance() << "MakeMove";
 
     //control.push(last_move_);
@@ -1253,6 +1263,20 @@ void Moves::UnmakeMove(std::size_t move)
 
     *castling_rights_ = last_move_->old_castling_rights_;
     *en_passant_ = last_move_->old_en_passant_;
+
+    if(last_move_->captured_ != PieceType::KAllPieces || (!*active_side_ && (board_->white_pawns_ & from) ) || (*active_side_ && (board_->black_pawns_ & from) ) )
+    {
+        *fifty_moves_counter_ = last_move_->old_fifty_moves_counter_;
+    }
+    else
+        *fifty_moves_counter_ -= 1;
+
+    if(control.top() != *fifty_moves_counter_)
+    {
+        Logger::GetInstance();
+    }
+
+    control.pop();
 
     if(*active_side_)
         *active_side_ = Side::kBlack;
