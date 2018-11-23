@@ -29,7 +29,7 @@ private:
     std::array<uint64_t, kHashCastlingSize> castling_hashes_;
     uint64_t side_hash_;
 
-    std::array<std::pair<uint64_t, std::size_t>, 256> hashes_;
+    std::array<std::pair<uint64_t, std::size_t>, 4096> hashes_;
     std::pair<uint64_t, std::size_t> *current_hash_;
 };
 
