@@ -24,6 +24,8 @@ public:
     void SetMovesToGo(std::size_t moves);
     void SetInfinite(bool is_infinite);
 
+    bool IsInfinite() const;
+
     void CalculateTime();
     bool CheckTime() const;
 

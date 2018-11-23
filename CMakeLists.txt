@@ -44,7 +44,7 @@ SET(OTHER readme.md)
 SET(LIBS ${LIBS} pthread)
 
 EXECUTE_PROCESS(
-  COMMAND git log -1 --pretty=format:%ad%h --date=format:%y%m%d
+  COMMAND git log "-1" "--pretty=format:%ad %h" "--date=format:%Y-%m-%d"
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE GIT_VERSION
   OUTPUT_STRIP_TRAILING_WHITESPACE

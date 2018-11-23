@@ -55,6 +55,7 @@ private:
     bool found_any_move_;
 
     uint64_t nodes;
+    std::size_t moves_in_root_;
     std::size_t current_depth_;
 };
 

@@ -513,10 +513,8 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
             {
                 is_exist = true;
 
-//                for(std::size_t i = 0; i < depth; ++i )
-//                    std::cout << "-";
-
-//                std::cout << PrintMove(*move) << " ";
+                if(current_depth_ == 1 && depth == 1)
+                    moves_in_root_++;
 
                 ++nodes;
                 score = (fifty_moves = (fifty_moves_counter_ >= 100)) ? 0 : -AlphaBeta(depth - 1, -beta, -alpha, &local_pv_line[0]);
@@ -590,7 +588,8 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
     {
         current_depth_ = 0;
 
-//        std::cout << fifty_moves_counter_ << std::endl;
+        if(iterative_depth == 1)
+            moves_in_root_ = 0;
 
         score = AlphaBeta(iterative_depth, -kMateScore, kMateScore, &pv_line[0]);
         //score = NegaMax(iterative_depth, &pv_line[0]);
@@ -638,6 +637,9 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
 
             best_move = pv_line[0];
             found_any_move_ = true;
+
+            if(!TimeManager::GetInstance().IsInfinite() && iterative_depth == 1 && moves_in_root_ == 1)
+                break;
         }
 
 

@@ -37,6 +37,11 @@ void TimeManager::SetInfinite(bool is_infinite)
     is_infinite_ = is_infinite;
 }
 
+bool TimeManager::IsInfinite() const
+{
+    return is_infinite_;
+}
+
 void TimeManager::CalculateTime()
 {
     uint64_t move_time;
