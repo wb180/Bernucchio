@@ -640,6 +640,9 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
 
             if(!TimeManager::GetInstance().IsInfinite() && iterative_depth == 1 && moves_in_root_ == 1)
                 break;
+
+            if(TimeManager::GetInstance().TimeElapsed() >= 0.5)
+                break;
         }
 
 

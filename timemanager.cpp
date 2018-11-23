@@ -56,7 +56,8 @@ void TimeManager::CalculateTime()
         move_time = static_cast<uint64_t>(our_time_ / 25 + 0.6 * our_increment_);
     }
 
-    finish_time =  std::chrono::steady_clock::now() + std::chrono::milliseconds {move_time};
+    start_time_ = std::chrono::steady_clock::now();
+    finish_time =  start_time_ + std::chrono::milliseconds {move_time};
 }
 
 bool TimeManager::CheckTime() const
@@ -67,4 +68,11 @@ bool TimeManager::CheckTime() const
 //    std::cout << (std::chrono::steady_clock::now() < finish_time) << std::endl;
 
     return  std::chrono::steady_clock::now() < finish_time;
+}
+
+double TimeManager::TimeElapsed() const
+{
+    auto time_now = std::chrono::steady_clock::now();
+
+    return (time_now - start_time_)/(finish_time - start_time_);
 }

@@ -28,6 +28,7 @@ public:
 
     void CalculateTime();
     bool CheckTime() const;
+    double TimeElapsed() const;
 
 private:
     TimeManager();
@@ -39,6 +40,7 @@ private:
     std::size_t moves_to_go_;
     bool is_infinite_ = true;
 
+    std::chrono::time_point<std::chrono::steady_clock> start_time_;
     std::chrono::time_point<std::chrono::steady_clock> finish_time;
 };
 
