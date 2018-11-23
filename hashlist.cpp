@@ -1,8 +1,11 @@
 #include "bits_functions.h"
 #include "hashlist.h"
 
+#include <algorithm>
 #include <random>
 #include <iostream>
+#include <stack>
+#include "logger.h"
 
 HashList::HashList(const Board *board) : board_(board)
 {
@@ -24,19 +27,24 @@ HashList::HashList(const Board *board) : board_(board)
     for(std::size_t castling_rights = 0; castling_rights <= max_castling; ++castling_rights )
         castling_hashes_[castling_rights] = rng();
 
-    current_hash_ = &hashes_[0];
+    side_hash_ = rng();
 }
 
-void HashList::ComputeInitialHash(const uint64_t &en_passant, const std::size_t &castlings)
+void HashList::ComputeInitialHash(const uint64_t &en_passant, const std::size_t &castlings, Side side)
 {
     uint64_t occupied = board_->occupied_;
     uint64_t hash = 0;
-    std::size_t lsb = 0;
+
+    hashes_ = {};
+
+    std::size_t lsb;
+    PieceType type;
 
     do
     {
+        type = GetHashType(GetLSBPos(occupied));
         lsb = GetLSBPos(occupied);
-        hash ^= pieces_hashes_[GetHashType(lsb)][lsb];
+        hash ^= pieces_hashes_[type][lsb];
         occupied &= occupied - 1;
     }
     while(occupied);
@@ -44,101 +52,103 @@ void HashList::ComputeInitialHash(const uint64_t &en_passant, const std::size_t 
     if(en_passant)
         hash ^= en_passant_hashes_[(en_passant * kHashEnPassantMagic) >> kBitShift16];
 
-    if(castlings)
-        hash ^= castling_hashes_[castlings];
+    hash ^= castling_hashes_[castlings];
 
-    *current_hash_ = hash;
-    ++current_hash_;
+    if(side == Side::kWhite)
+        hash ^= side_hash_;
 
-    en_passant_old_ = en_passant;
-    castlings_old_ = castlings;
+    current_hash_ = &hashes_[0];
+    (*current_hash_).first = hash;
+    (*current_hash_).second = 0;
 }
 
-void HashList::UpdateHash(const uint64_t &move, PieceType captured)
+void HashList::UpdateHash(const uint64_t &move, MoveInfo* move_info, const uint64_t &en_passant, const std::size_t &castlings)
 {
-    uint64_t hash = *current_hash_;
+    uint64_t hash = (*current_hash_).first;
+    std::size_t index = (*current_hash_).second;
+    ++current_hash_;
 
-    std::size_t from = GetBitSet(move & MoveMasks::kFrom);
-    std::size_t to = GetBitSet(move & MoveMasks::kTo);
+    std::size_t from = move & MoveMasks::kFrom;
+    std::size_t to = (move & MoveMasks::kTo) >> 6;
 
-    std::size_t hash_type = GetHashType(from);
+    std::size_t hash_type = GetHashType(to);
 
     hash ^= pieces_hashes_[hash_type][from];
     hash ^= pieces_hashes_[hash_type][to];
 
-    if(captured != PieceType::KAllPieces)
-        hash ^= pieces_hashes_[captured][to];
+    if(move_info->captured_ != PieceType::KAllPieces && (move & MoveMasks::kFlag) != MoveFlags::kEnPassant)
+        hash ^= pieces_hashes_[move_info->captured_][to];
 
     if((move & MoveMasks::kFlag) == MoveFlags::kEnPassant)
     {
-        hash ^= en_passant_hashes_[(en_passant_old_ * kHashEnPassantMagic) >> kBitShift16];
-        std::size_t en_passant_target = GetLSBPos(en_passant_old_);
-        hash ^= pieces_hashes_[GetHashType(en_passant_target)][en_passant_target];
-        en_passant_old_ = 0;
+        hash ^= en_passant_hashes_[(move_info->old_en_passant_ * kHashEnPassantMagic) >> kBitShift16];
+        std::size_t en_passant_target = GetLSBPos(move_info->old_en_passant_);
+        hash ^= pieces_hashes_[move_info->captured_][hash_type == PieceType::kWhitePawns ? en_passant_target - kMoveForward : en_passant_target + kMoveForward];
     }
 
     if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
     {
-        switch(move & MoveMasks::kPromote)
-        {
-        case PromotionType::kQueen:
-            hash ^= pieces_hashes_[hash_type == PieceType::kWhitePawns ? PieceType::kWhiteQueens : PieceType::kBlackQueens][to];
-        break;
-
-        case PromotionType::kRook:
-            hash ^= pieces_hashes_[hash_type == PieceType::kWhitePawns ? PieceType::kWhiteRooks : PieceType::kBlackRooks][to];
-        break;
-
-        case PromotionType::kBishop:
-            hash ^= pieces_hashes_[hash_type == PieceType::kWhitePawns ? PieceType::kWhiteBishops : PieceType::kBlackBishops][to];
-        break;
-
-        case PromotionType::kKnight:
-            hash ^= pieces_hashes_[hash_type == PieceType::kWhitePawns ? PieceType::kWhiteKnights : PieceType::kBlackKnights][to];
-        break;
-        }
+        hash ^= pieces_hashes_[hash_type][from];
+        hash ^= pieces_hashes_[hash_type <= PieceType::kWhiteQueens ? PieceType::kWhitePawns : PieceType::kBlackPawns][from];
     }
 
     if((move & MoveMasks::kFlag) == MoveFlags::kCastling)
     {
-        hash ^= castling_hashes_[castlings_old_];
+        hash ^= castling_hashes_[move_info->old_castling_rights_];
 
         switch(to)
         {
-        case Squares::G1:
-            castlings_old_ ^= kBlackCastling_0_0;
-            break;
-        case Squares::C1:
-            castlings_old_ ^= kBlackCastling_0_0_0;
-            break;
         case Squares::G8:
-            castlings_old_ ^= kWhiteCastling_0_0;
+            hash ^= pieces_hashes_[PieceType::kBlackRooks][Squares::H8];
+            hash ^= pieces_hashes_[PieceType::kBlackRooks][Squares::F8];
             break;
         case Squares::C8:
-            castlings_old_ ^= kWhiteCastling_0_0_0;
+            hash ^= pieces_hashes_[PieceType::kBlackRooks][Squares::A8];
+            hash ^= pieces_hashes_[PieceType::kBlackRooks][Squares::D8];
+            break;
+        case Squares::G1:
+            hash ^= pieces_hashes_[PieceType::kWhiteRooks][Squares::H1];
+            hash ^= pieces_hashes_[PieceType::kWhiteRooks][Squares::F1];
+            break;
+        case Squares::C1:
+            hash ^= pieces_hashes_[PieceType::kWhiteRooks][Squares::A1];
+            hash ^= pieces_hashes_[PieceType::kWhiteRooks][Squares::D1];
             break;
         }
 
-        hash ^= castling_hashes_[castlings_old_];
+        hash ^= castling_hashes_[castlings];
     }
 
-    if(hash_type == PieceType::kWhitePawns && from >= Squares::A2 && from <= Squares::H2 && to >= Squares::A4 && to <= Squares::H4)
+    if(en_passant)
+        hash ^= en_passant_hashes_[(en_passant * kHashEnPassantMagic) >> kBitShift16];
+
+    hash ^= side_hash_;
+
+    (*current_hash_).first = hash;
+
+    if(move_info->captured_ != PieceType::KAllPieces || (move & MoveMasks::kFlag) || hash_type == PieceType::kWhitePawns || hash_type == PieceType::kBlackPawns)
     {
-        hash ^= en_passant_hashes_[((en_passant_old_ = GetBitSet(from + kBoardSize) ) * kHashEnPassantMagic) >> kBitShift16];
+        (*current_hash_).second = ++index;
     }
-
-    if(hash_type == PieceType::kBlackPawns && from >= Squares::A7 && from <= Squares::H7 && to >= Squares::A5 && to <= Squares::H5)
+    else
     {
-        hash ^= en_passant_hashes_[((en_passant_old_ = GetBitSet(to + kBoardSize) ) * kHashEnPassantMagic) >> kBitShift16];
+        (*current_hash_).second = index;
     }
-
-    *current_hash_ = hash;
-    ++current_hash_;
 }
 
 void HashList::UpdateHash()
 {
     --current_hash_;
+}
+
+uint64_t HashList::GetHash() const
+{
+    return (*current_hash_).first;
+}
+
+bool HashList::Is3FoldRepetition() const
+{
+    return std::count_if(&hashes_[(*current_hash_).second], const_cast<const std::pair<uint64_t, std::size_t>* >(current_hash_), [&](const std::pair<uint64_t, std::size_t> h){return h.first == (*current_hash_).first;}) >= 2;
 }
 
 PieceType HashList::GetHashType(std::size_t lsb) const

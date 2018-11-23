@@ -10,10 +10,6 @@
 static std::array<std::array<uint64_t, 512>, kBitBoardSize> bishop_moves;
 static std::array<std::array<uint64_t, 4096>, kBitBoardSize> rook_moves;
 
-//static std::stack<MoveInfo*> control;
-//static std::stack<std::pair<Board, std::size_t> > control;
-static std::stack<std::size_t> control;
-
 Moves::Moves(Board *board, uint64_t *en_passant, std::size_t *castling_rights, Side *side, std::size_t *fifty_moves_counter) : board_(board), en_passant_(en_passant),
     castling_rights_(castling_rights), active_side_(side), fifty_moves_counter_(fifty_moves_counter)
 {
@@ -188,10 +184,6 @@ void Moves::GetBlackAttacksAndPromotions(MoveList *move_list)
         pieces &= pieces - 1;
     }
 
-    /*Logger lg;
-    std::cout << "!!!!!!!!!!!!!!!!" << std::endl;
-    lg << (board_->black_pawns_ >> kMoveRight ) << board_->whites_;*/
-
     attacks = (board_->black_pawns_ >> kMoveLeft) & kEmptyLeft & board_->whites_;
     move_list->AddPawnMoves(Side::kBlack, attacks & kEmptyBottom, PawnMoveType::kRightAttack);
     move_list->AddPawnPromotions(Side::kBlack, attacks & kBottomRow, PawnMoveType::kRightAttack);
@@ -270,24 +262,8 @@ bool Moves::MakeMove(std::size_t move)
     uint64_t from = GetBitSet(move & MoveMasks::kFrom);
     uint64_t to = GetBitSet((move & MoveMasks::kTo) >> 6);
 
-//    auto x = move & MoveMasks::kFrom;
-//    auto y = (move & MoveMasks::kTo) >> 6;
     bool is_legal = true;
     PieceType captured = PieceType::KAllPieces;
-
-    //Logger::GetInstance() << board_->white_rooks_ << board_->white_bishops_ << board_->GetFen();
-
-//Board save_board = *board_;
-
-//if(move == 4484)
-//{
-//    Logger lg;
-
-//    std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-
-//    lg << board_->black_king_ << board_->black_rooks_ << board_->blacks_ << board_->occupied_;
-//    //lg << board_->white_king_ << board_->whites_ << board_->occupied_ ;
-//}
 
     if(*active_side_)
     {
@@ -346,12 +322,6 @@ bool Moves::MakeMove(std::size_t move)
                     board_->white_king_ ^= from | to;
                     board_->whites_ ^= from | to;
                     board_->occupied_ ^= from;
-
-//                    if(save_board != *board_)
-//                    {
-//                        std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
-//                        std::exit(1);
-//                    }
 
                     return is_legal;
                 }
@@ -539,12 +509,6 @@ bool Moves::MakeMove(std::size_t move)
                     board_->occupied_ ^= from | to;
                 }
 
-//                if(save_board != *board_)
-//                {
-//                    std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
-//                    std::exit(1);
-//                }
-
                 return is_legal;
             }
         }
@@ -606,12 +570,6 @@ bool Moves::MakeMove(std::size_t move)
                     board_->black_king_ ^= from | to;
                     board_->blacks_ ^= from | to;
                     board_->occupied_ ^= from;
-
-//                    if(save_board != *board_)
-//                    {
-//                        std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
-//                        std::exit(1);
-//                    }
 
                     return is_legal;
                 }
@@ -750,12 +708,6 @@ bool Moves::MakeMove(std::size_t move)
                     board_->occupied_ ^= from;
                 }
 
-//                if(save_board != *board_)
-//                {
-//                    std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
-//                    std::exit(1);
-//                }
-
                 return is_legal;
             }
         }
@@ -805,12 +757,6 @@ bool Moves::MakeMove(std::size_t move)
                     board_->occupied_ ^= from | to;
                 }
 
-//                if(save_board != *board_)
-//                {
-//                    std::cout << std::endl << board_->GetFen() << std::endl << save_board.GetFen() << std::endl;
-//                    std::exit(1);
-//                }
-
                 return is_legal;
             }
         }
@@ -820,8 +766,6 @@ bool Moves::MakeMove(std::size_t move)
     last_move_->old_en_passant_ = *en_passant_;
     last_move_->captured_ = captured;
 
-    control.push(*fifty_moves_counter_);
-
     if(captured != PieceType::KAllPieces || (*active_side_ && (board_->white_pawns_ & to) ) || (!*active_side_ && (board_->black_pawns_ & to) ) )
     {
         last_move_->old_fifty_moves_counter_ = *fifty_moves_counter_;
@@ -829,10 +773,6 @@ bool Moves::MakeMove(std::size_t move)
     }
     else
         *fifty_moves_counter_ += 1;
-
-    //Logger::GetInstance() << "MakeMove";
-
-    //control.push(last_move_);
 
     ++last_move_;
 
@@ -986,18 +926,6 @@ bool Moves::MakeMove(std::size_t move)
     else
         *active_side_ = Side::kWhite;
 
-    //control.push(std::make_pair(save_board, move));
-
-//    if(move == 2138)
-//    {
-//        Logger lg;
-
-//        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-
-//        //lg << board_->blacks_ << board_->occupied_ << board_->empty_;
-//        lg << board_->whites_ << board_->occupied_ << board_->empty_;
-//    }
-
     return true;
 }
 
@@ -1006,30 +934,7 @@ void Moves::UnmakeMove(std::size_t move)
     uint64_t from = GetBitSet(move & MoveMasks::kFrom);
     uint64_t to = GetBitSet((move & MoveMasks::kTo) >> 6);
 
-//    if(move == 2138)
-//    {
-//        Logger lg;
-
-//        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-
-//        //lg << board_->blacks_ << board_->occupied_ << board_->empty_;
-//        lg << board_->whites_ << board_->occupied_ << board_->empty_;
-//    }
-
     --last_move_;
-
-//    if( control.top() != last_move_ )
-//    {
-//        Logger::GetInstance() << "UnMakeMove";
-//    }
-
-//    control.pop();
-
-    /*
-    if(last_move_ < &move_infos[0])
-    {
-        Logger::GetInstance();
-    }*/
 
     if(!(*active_side_))
     {
@@ -1271,46 +1176,10 @@ void Moves::UnmakeMove(std::size_t move)
     else
         *fifty_moves_counter_ -= 1;
 
-    if(control.top() != *fifty_moves_counter_)
-    {
-        Logger::GetInstance();
-    }
-
-    control.pop();
-
     if(*active_side_)
         *active_side_ = Side::kBlack;
     else
         *active_side_ = Side::kWhite;
-
-//    if(control.top().first != *board_)
-//    {
-//        std::cout << std::endl << board_->GetFen() << std::endl << control.top().first.GetFen() << std::endl;
-
-//        std::cout << std::endl;
-
-//        std::cout << control.top().second << std::endl;
-
-//        Logger lg;
-//        lg.PrintMove(control.top().second);
-
-//        std::cout << (board_->black_bishops_ == control.top().first.black_bishops_) << std::endl;
-//        lg << board_->black_bishops_ << control.top().first.black_bishops_;
-
-//        std::exit(1);
-//    }
-
-//    control.pop();
-
-//    if(move == 2138)
-//    {
-//        Logger lg;
-
-//        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-
-//        //lg << board_->blacks_ << board_->occupied_ << board_->empty_;
-//        lg << board_->whites_ << board_->occupied_ << board_->empty_;
-    //    }
 }
 
 bool Moves::IsKingAttacked(Side side) const
@@ -1333,9 +1202,6 @@ bool Moves::IsKingAttacked(Side side) const
     }
     else
     {
-//        Logger::GetInstance() << bishop_moves[square][(((kBishopMasks[square] & board_->occupied_) * kBishopMagics[square]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[square])))];
-//        Logger::GetInstance() << board_->white_bishops_;
-
         if(rook_moves[square][(((kRookMasks[square] & board_->occupied_) * kRookMagics[square]) >> (kBitBoardSize - GetBitsCount(kRookMasks[square])))] & (board_->white_rooks_))
             return true;
 
@@ -1355,7 +1221,11 @@ bool Moves::IsKingAttacked(Side side) const
 void Moves::Reset()
 {
     last_move_ = &move_infos[0];
-    //control = {};
+}
+
+MoveInfo *Moves::GetLastMoveInfo() const
+{
+    return  (last_move_ - 1);
 }
 
 bool Moves::IsSquareAttacked(std::size_t square) const
@@ -1482,9 +1352,6 @@ std::size_t Moves::GetMove(const std::string &move_string)
         {
             move = from | (to << 6);
         }
-
-        //Logger::GetInstance().PrintMove(move);
-        //Logger::GetInstance() << move_string;
     }
 
     return move;

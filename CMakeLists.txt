@@ -26,7 +26,7 @@ ENDIF()
 
 if(BUILD_OPTION_WITH_TESTS)
   ADD_COMPILE_DEFINITIONS(BUILD_WITH_TESTS)
-  SET(SOURCES tests/fen.cpp tests/perft.cpp)
+  SET(SOURCES tests/hash.cpp)
   SET(LIBS gtest)
   MESSAGE(STATUS "build with tests")
 ELSE()

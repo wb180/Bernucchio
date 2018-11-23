@@ -29,6 +29,7 @@ public:
     bool IsKingAttacked(Side side) const;
 
     void Reset();
+    MoveInfo *GetLastMoveInfo() const;
 
 private:
     Board *board_;
