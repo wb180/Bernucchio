@@ -766,6 +766,9 @@ bool Moves::MakeMove(std::size_t move)
     last_move_->old_en_passant_ = *en_passant_;
     last_move_->captured_ = captured;
 
+    if(captured != PieceType::KAllPieces)
+        board_->RemovePiece(captured);
+
     if(captured != PieceType::KAllPieces || (*active_side_ && (board_->white_pawns_ & to) ) || (!*active_side_ && (board_->black_pawns_ & to) ) )
     {
         last_move_->old_fifty_moves_counter_ = *fifty_moves_counter_;
@@ -800,23 +803,29 @@ bool Moves::MakeMove(std::size_t move)
         }
         else if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
         {
+            board_->RemovePiece(PieceType::kWhitePawns);
+
             switch((move & MoveMasks::kPromote) >> 14)
             {
             case PromotionType::kQueen:
                 board_->white_bishops_ ^= to;
                 board_->white_rooks_ ^= to;
+                board_->AddPiece(PieceType::kWhiteQueens);
                 break;
 
             case PromotionType::kRook:
                 board_->white_rooks_ ^= to;
+                board_->AddPiece(PieceType::kWhiteRooks);
                 break;
 
             case PromotionType::kBishop:
                 board_->white_bishops_ ^= to;
+                board_->AddPiece(PieceType::kWhiteBishops);
                 break;
 
             case PromotionType::kKnight:
                 board_->white_knights_ ^= to;
+                board_->AddPiece(PieceType::kWhiteKnights);
                 break;
             }
 
@@ -870,23 +879,29 @@ bool Moves::MakeMove(std::size_t move)
         }
         else if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
         {
+            board_->RemovePiece(PieceType::kBlackPawns);
+
             switch((move & MoveMasks::kPromote) >> 14)
             {
             case PromotionType::kQueen:
                 board_->black_bishops_ ^= to;
                 board_->black_rooks_ ^= to;
+                board_->AddPiece(PieceType::kBlackQueens);
                 break;
 
             case PromotionType::kRook:
                 board_->black_rooks_ ^= to;
+                board_->AddPiece(PieceType::kBlackRooks);
                 break;
 
             case PromotionType::kBishop:
                 board_->black_bishops_ ^= to;
+                board_->AddPiece(PieceType::kBlackBishops);
                 break;
 
             case PromotionType::kKnight:
                 board_->black_knights_ ^= to;
+                board_->AddPiece(PieceType::kBlackKnights);
                 break;
             }
 

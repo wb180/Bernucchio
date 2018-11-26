@@ -71,19 +71,19 @@ bool Board::SetFen(const std::string &fen_string)
 
             switch(symbol)
             {
-                case 'p': black_pawns_ |= GetBitSet(bit_number); break;
-                case 'n': black_knights_ |= GetBitSet(bit_number); break;
-                case 'b': black_bishops_ |= GetBitSet(bit_number); break;
-                case 'r': black_rooks_ |= GetBitSet(bit_number); break;
+                case 'p': black_pawns_ |= GetBitSet(bit_number); ++black_pawns_count; break;
+                case 'n': black_knights_ |= GetBitSet(bit_number); ++black_knights_count; break;
+                case 'b': black_bishops_ |= GetBitSet(bit_number); ++black_bishops_count; break;
+                case 'r': black_rooks_ |= GetBitSet(bit_number); ++black_rooks_count; break;
                 case 'q': black_rooks_ |= GetBitSet(bit_number);
-                          black_bishops_ |= GetBitSet(bit_number); break;
+                          black_bishops_ |= GetBitSet(bit_number); ++black_queens_count; break;
                 case 'k': black_king_ |= GetBitSet(bit_number); break;
-                case 'P': white_pawns_ |= GetBitSet(bit_number); break;
-                case 'N': white_knights_ |= GetBitSet(bit_number); break;
-                case 'B': white_bishops_ |= GetBitSet(bit_number); break;
-                case 'R': white_rooks_ |= GetBitSet(bit_number); break;
+                case 'P': white_pawns_ |= GetBitSet(bit_number); ++white_pawns_count; break;
+                case 'N': white_knights_ |= GetBitSet(bit_number); ++white_knights_count; break;
+                case 'B': white_bishops_ |= GetBitSet(bit_number); ++white_bishops_count; break;
+                case 'R': white_rooks_ |= GetBitSet(bit_number); ++white_rooks_count; break;
                 case 'Q': white_rooks_ |= GetBitSet(bit_number);
-                          white_bishops_ |= GetBitSet(bit_number);break;
+                          white_bishops_ |= GetBitSet(bit_number); ++white_queens_count; break;
                 case 'K': white_king_ |= GetBitSet(bit_number); break;
                 default : result = false; break;
             }
@@ -157,6 +157,90 @@ std::string Board::GetFen() const
     }
 
     return fen_string;
+}
+
+bool Board::IsSufficientMaterial() const
+{
+    if(black_pawns_count == 0 && black_queens_count == 0 && black_rooks_count == 0 &&
+            white_pawns_count == 0 && white_queens_count == 0 && white_rooks_count == 0)
+    {
+        return white_bishops_count >= 2 || (white_bishops_ == 1 && white_knights_ >= 1) || white_knights_count >= 3 ||
+                black_bishops_count >= 2 || (black_bishops_ == 1 && black_knights_ >= 1) || black_knights_count >= 3;
+    }
+
+    return true;
+}
+
+void Board::AddPiece(PieceType piece)
+{
+    switch(piece)
+    {
+    case PieceType::kWhiteQueens:
+        ++white_queens_count;
+        break;
+    case PieceType::kBlackQueens:
+        ++black_queens_count;
+        break;
+    case PieceType::kWhiteRooks:
+        ++white_rooks_count;
+        break;
+    case PieceType::kBlackRooks:
+        ++black_rooks_count;
+        break;
+    case PieceType::kWhiteBishops:
+        ++white_bishops_count;
+        break;
+    case PieceType::kBlackBishops:
+        ++black_bishops_count;
+        break;
+    case PieceType::kWhiteKnights:
+        ++white_knights_count;
+        break;
+    case PieceType::kBlackKnights:
+        ++black_knights_count;
+        break;
+    default:
+        break;
+    }
+}
+
+void Board::RemovePiece(PieceType piece)
+{
+    switch(piece)
+    {
+    case PieceType::kWhitePawns:
+        --white_pawns_count;
+        break;
+    case PieceType::kBlackPawns:
+        --black_pawns_count;
+        break;
+    case PieceType::kWhiteQueens:
+        --white_queens_count;
+        break;
+    case PieceType::kBlackQueens:
+        --black_queens_count;
+        break;
+    case PieceType::kWhiteRooks:
+        --white_rooks_count;
+        break;
+    case PieceType::kBlackRooks:
+        --black_rooks_count;
+        break;
+    case PieceType::kWhiteBishops:
+        --white_bishops_count;
+        break;
+    case PieceType::kBlackBishops:
+        --black_bishops_count;
+        break;
+    case PieceType::kWhiteKnights:
+        --white_knights_count;
+        break;
+    case PieceType::kBlackKnights:
+        --black_knights_count;
+        break;
+    default:
+        break;
+    }
 }
 
 bool Board::operator!=(const Board &b) const

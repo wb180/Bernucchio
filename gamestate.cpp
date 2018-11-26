@@ -458,7 +458,7 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
                 hashes_.UpdateHash(*move, moves_.GetLastMoveInfo(), en_passant_, castlings_);
 
                 ++nodes;
-                score = (is_draw_rules = (fifty_moves_counter_ >= 100 || hashes_.Is3FoldRepetition())) ? 0 : -AlphaBeta(depth - 1, -beta, -alpha, &local_pv_line[0]);
+                score = (is_draw_rules = (fifty_moves_counter_ >= 100 || hashes_.Is3FoldRepetition() || !board_.IsSufficientMaterial())) ? 0 : -AlphaBeta(depth - 1, -beta, -alpha, &local_pv_line[0]);
                 moves_.UnmakeMove(*move);
 
                 hashes_.UpdateHash();

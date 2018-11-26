@@ -9,22 +9,6 @@ Evaluator::Evaluator(Board *board) : board_(board)
 
 int Evaluator::Score()
 {
-    std::size_t total_pieces = GetBitsCount(board_->occupied_);
-
-    if( total_pieces == 2)
-        return 0;
-    else if(total_pieces == 3)
-    {
-        if(GetBitsCount(board_->white_knights_) || GetBitsCount(board_->white_bishops_) ||
-                GetBitsCount(board_->black_knights_) || GetBitsCount(board_->black_bishops_))
-            return 0;
-    }
-    else if(total_pieces == 4)
-    {
-        if(GetBitsCount(board_->white_knights_) == 2 || GetBitsCount(board_->black_knights_ == 2))
-         return 0;
-    }
-
     int score = 0;
     uint64_t pieces = board_->white_pawns_;
 

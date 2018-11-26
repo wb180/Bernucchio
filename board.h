@@ -1,6 +1,8 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+#include "constants.h"
+
 #include <string>
 
 class Board
@@ -17,6 +19,10 @@ public:
 
     bool SetFen(const std::string &fen_string);
     std::string GetFen() const;
+
+    bool IsSufficientMaterial() const;
+    void AddPiece(PieceType piece);
+    void RemovePiece(PieceType piece);
 
     bool operator!=(const Board &b) const;
 
@@ -35,6 +41,17 @@ private:
     uint64_t black_bishops_;
     uint64_t black_rooks_;
     uint64_t black_king_;
+
+    std::size_t black_pawns_count;
+    std::size_t white_pawns_count;
+    std::size_t black_knights_count;
+    std::size_t white_knights_count;
+    std::size_t black_bishops_count;
+    std::size_t white_bishops_count;
+    std::size_t black_rooks_count;
+    std::size_t white_rooks_count;
+    std::size_t black_queens_count;
+    std::size_t white_queens_count;
 
     uint64_t occupied_;
     uint64_t empty_;
