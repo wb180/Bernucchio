@@ -148,7 +148,19 @@ uint64_t HashList::GetHash() const
 
 bool HashList::Is3FoldRepetition() const
 {
-    return std::count_if(&hashes_[(*current_hash_).second], const_cast<const std::pair<uint64_t, std::size_t>* >(current_hash_), [&](const std::pair<uint64_t, std::size_t> h){return h.first == (*current_hash_).first;}) >= 2;
+    auto start_search = current_hash_ - 2;
+    auto end_search = &hashes_[current_hash_->second];
+    std::size_t repetitions = 0;
+
+    while(start_search >= end_search && repetitions != 2)
+    {
+        if(start_search->first == current_hash_->first)
+            ++repetitions;
+
+        start_search -= 2;
+    }
+
+    return repetitions == 2;
 }
 
 PieceType HashList::GetHashType(std::size_t lsb) const
