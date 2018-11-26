@@ -25,16 +25,12 @@ int Evaluator::Score()
          return 0;
     }
 
-    int score = static_cast<int>(GetBitsCount(board_->white_pawns_)) * 100 + static_cast<int>(GetBitsCount(board_->white_knights_)) * 300 +
-            static_cast<int>(GetBitsCount(board_->white_bishops_)) * 340 + static_cast<int>(GetBitsCount(board_->white_rooks_)) * 500 -
-            static_cast<int>(GetBitsCount(board_->black_pawns_)) * 100 - static_cast<int>(GetBitsCount(board_->black_knights_)) * 300 -
-            static_cast<int>(GetBitsCount(board_->black_bishops_)) * 340 - static_cast<int>(GetBitsCount(board_->black_rooks_)) * 500;
-
+    int score = 0;
     uint64_t pieces = board_->white_pawns_;
 
     while(pieces)
     {
-        score += kPstWhitePawns[GetLSBPos(pieces)];
+        score += 100 + kPstWhitePawns[GetLSBPos(pieces)];
         pieces &= pieces - 1;
     }
 
@@ -42,7 +38,7 @@ int Evaluator::Score()
 
     while(pieces)
     {
-        score -= kPstBlackPawns[GetLSBPos(pieces)];
+        score -= 100 + kPstBlackPawns[GetLSBPos(pieces)];
         pieces &= pieces - 1;
     }
 
@@ -50,7 +46,7 @@ int Evaluator::Score()
 
     while(pieces)
     {
-        score += kPstWhiteKnights[GetLSBPos(pieces)];
+        score += 300 + kPstWhiteKnights[GetLSBPos(pieces)];
         pieces &= pieces - 1;
     }
 
@@ -58,7 +54,7 @@ int Evaluator::Score()
 
     while(pieces)
     {
-        score -= kPstBlackKnights[GetLSBPos(pieces)];
+        score -= 300 + kPstBlackKnights[GetLSBPos(pieces)];
         pieces &= pieces - 1;
     }
 
@@ -66,7 +62,7 @@ int Evaluator::Score()
 
     while(pieces)
     {
-        score += kPstWhiteBishops[GetLSBPos(pieces)];
+        score += 340 + kPstWhiteBishops[GetLSBPos(pieces)];
         pieces &= pieces - 1;
     }
 
@@ -74,7 +70,7 @@ int Evaluator::Score()
 
     while(pieces)
     {
-        score -= kPstBlackBishops[GetLSBPos(pieces)];
+        score -= 340 + kPstBlackBishops[GetLSBPos(pieces)];
         pieces &= pieces - 1;
     }
 
@@ -82,7 +78,7 @@ int Evaluator::Score()
 
     while(pieces)
     {
-        score += kPstWhiteRooks[GetLSBPos(pieces)];
+        score += 500 + kPstWhiteRooks[GetLSBPos(pieces)];
         pieces &= pieces - 1;
     }
 
@@ -90,7 +86,7 @@ int Evaluator::Score()
 
     while(pieces)
     {
-        score -= kPstBlackRooks[GetLSBPos(pieces)];
+        score -= 500 + kPstBlackRooks[GetLSBPos(pieces)];
         pieces &= pieces - 1;
     }
 
