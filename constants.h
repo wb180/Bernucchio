@@ -95,7 +95,8 @@ enum PromotionType : std::size_t
     kQueen,
     kRook,
     kBishop,
-    kKnight
+    kKnight,
+    kPawn
 };
 
 enum PawnMoveType : std::size_t

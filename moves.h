@@ -13,12 +13,12 @@ public:
 
     void GetWhiteKingAttacks(MoveList *move_list);
     void GetWhiteKingMoves(MoveList *move_list);
-    void GetWhiteAttacksAndPromotions(MoveList *move_list);
+    void GetWhiteAttacksAndPromotions(MoveList *move_list, bool include_checks = true);
     void GetWhiteMoves(MoveList *move_list);
 
     void GetBlackKingAttacks(MoveList *move_list);
     void GetBlackKingMoves(MoveList *move_list);
-    void GetBlackAttacksAndPromotions(MoveList *move_list);
+    void GetBlackAttacksAndPromotions(MoveList *move_list, bool include_checks = true);
     void GetBlackMoves(MoveList *move_list);
 
     std::size_t GetMove(const std::string& move_string);

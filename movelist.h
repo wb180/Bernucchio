@@ -1,6 +1,7 @@
 #ifndef MOVELIST_H
 #define MOVELIST_H
 
+#include "board.h"
 #include "constants.h"
 #include "moveinfo.h"
 
@@ -18,6 +19,8 @@ public:
     void addMove(std::size_t from, std::size_t to, MoveFlags flag);
     void Reset();
     bool Empty() const;
+    void Sort();
+    void UpdateSortValues(Board* board);
 
 private:
     std::array<std::size_t, 256> moves_;

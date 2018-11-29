@@ -4,6 +4,8 @@
 
 #include "logger.h"
 
+#include <algorithm>
+
 MoveList::MoveList()
 {
     current_move_ = last_move_ = &moves_[0];
@@ -14,13 +16,6 @@ void MoveList::AddMoves(std::size_t from, uint64_t bit_board)
     while(bit_board)
     {
         *last_move_ = from | (GetLSBPos(bit_board) << 6);
-
-//        if(*last_move_ == 1502)
-//        {
-//            Logger lg;
-//            lg.PrintMove(*last_move_);
-//        }
-
         ++last_move_;
         bit_board &= bit_board - 1;
     }
@@ -62,12 +57,6 @@ void MoveList::AddPawnMoves(bool side, uint64_t bit_board, PawnMoveType move_typ
             if(move_type == PawnMoveType::kEnPassantLeft || move_type == PawnMoveType::kEnPassantRight)
                 *last_move_ |= MoveFlags::kEnPassant;
 
-//            if(*last_move_ == 1502)
-//            {
-//                Logger lg;
-//                lg.PrintMove(*last_move_);
-//            }
-
             ++last_move_;
             bit_board &= bit_board - 1;
         }
@@ -103,12 +92,6 @@ void MoveList::AddPawnMoves(bool side, uint64_t bit_board, PawnMoveType move_typ
 
             if(move_type == PawnMoveType::kEnPassantLeft || move_type == PawnMoveType::kEnPassantRight)
                 *last_move_ |= MoveFlags::kEnPassant;
-
-//            if(*last_move_ == 1502)
-//            {
-//                Logger lg;
-//                lg.PrintMove(*last_move_);
-//            }
 
             ++last_move_;
             bit_board &= bit_board - 1;
@@ -147,12 +130,6 @@ void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType mov
             for(std::size_t promote_to = PromotionType::kQueen; promote_to <= PromotionType::kKnight; ++promote_to)
             {
                 *last_move_ = from | (to << 6) | MoveFlags::kPromotion | (promote_to << 14);
-
-//                if(*last_move_ == 1502)
-//                {
-//                    Logger lg;
-//                    lg.PrintMove(*last_move_);
-//                }
                 ++last_move_;
             }
 
@@ -186,12 +163,6 @@ void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType mov
             for(std::size_t promote_to = PromotionType::kQueen; promote_to <= PromotionType::kKnight; ++promote_to)
             {
                 *last_move_ = from | (to << 6) | MoveFlags::kPromotion | (promote_to << 14);
-
-//                if(*last_move_ == 1502)
-//                {
-//                    Logger lg;
-//                    lg.PrintMove(*last_move_);
-//                }
                 ++last_move_;
             }
 
@@ -203,13 +174,6 @@ void MoveList::AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType mov
 void MoveList::addMove(std::size_t from, std::size_t to, MoveFlags flag)
 {
     *last_move_ = from | (to << 6) | flag;
-
-//    if(*last_move_ == 1502)
-//    {
-//        Logger lg;
-//        lg.PrintMove(*last_move_);
-//    }
-
     ++last_move_;
 }
 
@@ -221,6 +185,15 @@ void MoveList::Reset()
 bool MoveList::Empty() const
 {
     return current_move_ == last_move_;
+}
+
+void MoveList::Sort()
+{
+    std::stable_sort(current_move_, last_move_, [](const auto &a, const auto &b){return (a >> 16 ) < (b >> 16 );});
+}
+
+void MoveList::UpdateSortValues(Board *board)
+{
 }
 
 std::size_t *MoveList::GetNextMove()

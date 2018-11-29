@@ -26,6 +26,8 @@ public:
 
     bool operator!=(const Board &b) const;
 
+    PieceType GetPieceOnSquare(std::size_t square) const;
+
 private:
 
     uint64_t whites_;

@@ -18,56 +18,30 @@ Moves::Moves(Board *board, uint64_t *en_passant, std::size_t *castling_rights, S
 void Moves::GetWhiteKingAttacks(MoveList *move_list)
 {
     std::size_t king_position = GetLSBPos(board_->white_king_);
-    uint64_t king_moves = kKingMoves[king_position] & board_->empty_ & ~kKingMoves[GetLSBPos(board_->black_king_)];
+    uint64_t king_moves = kKingMoves[king_position] & board_->blacks_ & ~kKingMoves[GetLSBPos(board_->black_king_)];
     move_list->AddMoves(king_position, king_moves);
 }
 
 void Moves::GetWhiteKingMoves(MoveList *move_list)
 {
     std::size_t king_position = GetLSBPos(board_->white_king_);
-    uint64_t king_attacks = kKingMoves[king_position] & board_->blacks_ & ~kKingMoves[GetLSBPos(board_->black_king_)];
+    uint64_t king_attacks = kKingMoves[king_position] & board_->empty_ & ~kKingMoves[GetLSBPos(board_->black_king_)];
     move_list->AddMoves(king_position, king_attacks);
 }
 
-void Moves::GetWhiteAttacksAndPromotions(MoveList *move_list)
-{
-    uint64_t pieces = board_->white_knights_;
+void Moves::GetWhiteAttacksAndPromotions(MoveList *move_list, bool include_checks)
+{    
     uint64_t from = 0;
     uint64_t attacks = 0;
+    uint64_t blacks = board_->blacks_;
+    if(!include_checks)
+        blacks ^= board_->black_king_;
 
-    while(pieces)
-    {
-        from = GetLSBPos(pieces);
-        attacks = kKnightMoves[from] & board_->blacks_;
-        move_list->AddMoves(from, attacks);
-        pieces &= pieces - 1;
-    }
-
-    pieces = board_->white_bishops_;
-
-    while(pieces)
-    {
-        from = GetLSBPos(pieces);
-        attacks = bishop_moves[from][(((kBishopMasks[from] & board_->occupied_) * kBishopMagics[from]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[from])))] & board_->blacks_;
-        move_list->AddMoves(from, attacks);
-        pieces &= pieces - 1;
-    }
-
-    pieces = board_->white_rooks_;
-
-    while(pieces)
-    {
-        from = GetLSBPos(pieces);
-        attacks = rook_moves[from][((kRookMasks[from] & board_->occupied_) * kRookMagics[from]) >> (kBitBoardSize - GetBitsCount(kRookMasks[from]))] & board_->blacks_;
-        move_list->AddMoves(from, attacks);
-        pieces &= pieces - 1;
-    }
-
-    attacks = (board_->white_pawns_ << kMoveRight) & kEmptyLeft & board_->blacks_;
+    attacks = (board_->white_pawns_ << kMoveRight) & kEmptyLeft & blacks;
     move_list->AddPawnMoves(Side::kWhite, attacks & kEmptyTop, PawnMoveType::kLeftAttack);
     move_list->AddPawnPromotions(Side::kWhite, attacks & kTopRow, PawnMoveType::kLeftAttack);
 
-    attacks = (board_->white_pawns_ << kMoveLeft) & kEmptyRight & board_->blacks_;
+    attacks = (board_->white_pawns_ << kMoveLeft) & kEmptyRight & blacks;
     move_list->AddPawnMoves(Side::kWhite, attacks & kEmptyTop, PawnMoveType::kRightAttack);
     move_list->AddPawnPromotions(Side::kWhite, attacks & kTopRow, PawnMoveType::kRightAttack);
 
@@ -78,6 +52,36 @@ void Moves::GetWhiteAttacksAndPromotions(MoveList *move_list)
     {
         move_list->AddPawnMoves(Side::kWhite, (board_->white_pawns_ << kMoveRight) & kEmptyLeft & *en_passant_, PawnMoveType::kEnPassantLeft);
         move_list->AddPawnMoves(Side::kWhite, (board_->white_pawns_ << kMoveLeft) & kEmptyRight & *en_passant_, PawnMoveType::kEnPassantRight);
+    }
+
+    uint64_t pieces = board_->white_knights_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        attacks = kKnightMoves[from] & blacks;
+        move_list->AddMoves(from, attacks);
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->white_bishops_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        attacks = bishop_moves[from][(((kBishopMasks[from] & board_->occupied_) * kBishopMagics[from]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[from])))] & blacks;
+        move_list->AddMoves(from, attacks);
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->white_rooks_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        attacks = rook_moves[from][((kRookMasks[from] & board_->occupied_) * kRookMagics[from]) >> (kBitBoardSize - GetBitsCount(kRookMasks[from]))] & blacks;
+        move_list->AddMoves(from, attacks);
+        pieces &= pieces - 1;
     }
 
     GetWhiteKingAttacks(move_list);
@@ -139,56 +143,31 @@ void Moves::GetWhiteMoves(MoveList *move_list)
 void Moves::GetBlackKingAttacks(MoveList *move_list)
 {
     std::size_t king_position = GetLSBPos(board_->black_king_);
-    uint64_t king_moves = kKingMoves[king_position] & board_->empty_ & ~kKingMoves[GetLSBPos(board_->white_king_)];
+    uint64_t king_moves = kKingMoves[king_position] & board_->whites_ & ~kKingMoves[GetLSBPos(board_->white_king_)];
     move_list->AddMoves(king_position, king_moves);
 }
 
 void Moves::GetBlackKingMoves(MoveList *move_list)
 {
     std::size_t king_position = GetLSBPos(board_->black_king_);
-    uint64_t king_attacks = kKingMoves[king_position] & board_->whites_ & ~kKingMoves[GetLSBPos(board_->white_king_)];
+    uint64_t king_attacks = kKingMoves[king_position] & board_->empty_ & ~kKingMoves[GetLSBPos(board_->white_king_)];
     move_list->AddMoves(king_position, king_attacks);
 }
 
-void Moves::GetBlackAttacksAndPromotions(MoveList *move_list)
-{
-    uint64_t pieces = board_->black_knights_;
+void Moves::GetBlackAttacksAndPromotions(MoveList *move_list, bool include_checks)
+{    
     uint64_t from = 0;
     uint64_t attacks = 0;
+    uint64_t whites = board_->whites_;
 
-    while(pieces)
-    {
-        from = GetLSBPos(pieces);
-        attacks = kKnightMoves[from] & board_->whites_;
-        move_list->AddMoves(from, attacks);
-        pieces &= pieces - 1;
-    }
+    if(!include_checks)
+        whites ^= board_->white_king_;
 
-    pieces = board_->black_bishops_;
-
-    while(pieces)
-    {
-        from = GetLSBPos(pieces);
-        attacks = bishop_moves[from][(((kBishopMasks[from] & board_->occupied_) * kBishopMagics[from]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[from])))] & board_->whites_;
-        move_list->AddMoves(from, attacks);
-        pieces &= pieces - 1;
-    }
-
-    pieces = board_->black_rooks_;
-
-    while(pieces)
-    {
-        from = GetLSBPos(pieces);
-        attacks = rook_moves[from][((kRookMasks[from] & board_->occupied_) * kRookMagics[from]) >> (kBitBoardSize - GetBitsCount(kRookMasks[from]))] & board_->whites_;
-        move_list->AddMoves(from, attacks);
-        pieces &= pieces - 1;
-    }
-
-    attacks = (board_->black_pawns_ >> kMoveLeft) & kEmptyLeft & board_->whites_;
+    attacks = (board_->black_pawns_ >> kMoveLeft) & kEmptyLeft & whites;
     move_list->AddPawnMoves(Side::kBlack, attacks & kEmptyBottom, PawnMoveType::kRightAttack);
     move_list->AddPawnPromotions(Side::kBlack, attacks & kBottomRow, PawnMoveType::kRightAttack);
 
-    attacks = (board_->black_pawns_ >> kMoveRight) & kEmptyRight & board_->whites_;
+    attacks = (board_->black_pawns_ >> kMoveRight) & kEmptyRight & whites;
     move_list->AddPawnMoves(Side::kBlack, attacks & kEmptyBottom, PawnMoveType::kLeftAttack);
     move_list->AddPawnPromotions(Side::kBlack, attacks & kBottomRow, PawnMoveType::kLeftAttack);
 
@@ -199,6 +178,36 @@ void Moves::GetBlackAttacksAndPromotions(MoveList *move_list)
     {
         move_list->AddPawnMoves(Side::kBlack, (board_->black_pawns_ >> kMoveRight) & kEmptyRight & *en_passant_, PawnMoveType::kEnPassantLeft);
         move_list->AddPawnMoves(Side::kBlack, (board_->black_pawns_ >> kMoveLeft) & kEmptyLeft & *en_passant_, PawnMoveType::kEnPassantRight);
+    }
+
+    uint64_t pieces = board_->black_knights_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        attacks = kKnightMoves[from] & whites;
+        move_list->AddMoves(from, attacks);
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->black_bishops_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        attacks = bishop_moves[from][(((kBishopMasks[from] & board_->occupied_) * kBishopMagics[from]) >> (kBitBoardSize - GetBitsCount(kBishopMasks[from])))] & whites;
+        move_list->AddMoves(from, attacks);
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->black_rooks_;
+
+    while(pieces)
+    {
+        from = GetLSBPos(pieces);
+        attacks = rook_moves[from][((kRookMasks[from] & board_->occupied_) * kRookMagics[from]) >> (kBitBoardSize - GetBitsCount(kRookMasks[from]))] & whites;
+        move_list->AddMoves(from, attacks);
+        pieces &= pieces - 1;
     }
 
     GetBlackKingAttacks(move_list);

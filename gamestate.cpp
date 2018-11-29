@@ -75,7 +75,10 @@ bool GameState::SetFen(const std::string &fen_string)
             if(result && ++position != fen_string.size() && fen_string.at(position) != ' ')
                 result = false;
             else if(result && position >= fen_string.size())
+            {
+                hashes_.ComputeInitialHash(en_passant_, castlings_, active_side_);
                 return true;
+            }
 
             if(result)
             {
@@ -420,7 +423,7 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
     {
         if(depth == 0)
         {
-            return active_side_ == Side::kWhite ? evaluator_.Score() : -evaluator_.Score();
+            return QuiescenceSearch(-beta, -alpha);
         }
 
         MoveList move_list;
@@ -508,6 +511,52 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
     }
 
     return {};
+}
+
+int GameState::QuiescenceSearch(int alpha, int beta)
+{
+    MoveList move_list;
+
+    if(active_side_)
+        moves_.GetWhiteAttacksAndPromotions(&move_list, false);
+    else
+        moves_.GetBlackAttacksAndPromotions(&move_list, false);
+
+    std::size_t *move = nullptr;
+    bool is_exist = false;
+    int score;
+
+    ++current_depth_;
+
+    while((move = move_list.GetNextMove()))
+    {
+        if(moves_.MakeMove(*move))
+        {
+            is_exist = true;
+            hashes_.UpdateHash(*move, moves_.GetLastMoveInfo(), en_passant_, castlings_);
+
+            ++nodes;
+            score = QuiescenceSearch(-beta, -alpha);
+            moves_.UnmakeMove(*move);
+
+            hashes_.UpdateHash();
+
+            if(score >= beta)
+                return beta;
+
+            if(score > alpha)
+                alpha = score;
+        }
+    }
+
+    --current_depth_;
+
+    if(!is_exist)
+    {
+        alpha = active_side_ == Side::kWhite ? evaluator_.Score() : -evaluator_.Score();
+    }
+
+    return alpha;
 }
 
 void GameState::Search(std::size_t depth, std::atomic<bool> *stop)

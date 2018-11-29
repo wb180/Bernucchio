@@ -260,6 +260,53 @@ bool Board::operator!=(const Board &b) const
             b.black_king_ != black_king_;
 }
 
+PieceType Board::GetPieceOnSquare(std::size_t square) const
+{
+    uint64_t bit_board = GetBitSet(square);
+
+    if(bit_board & black_pawns_)
+        return PieceType::kBlackPawns;
+
+    if(bit_board & black_bishops_)
+    {
+        if(bit_board & black_rooks_)
+            return PieceType::kBlackQueens;
+        else
+            return PieceType::kBlackBishops;
+    }
+
+    if(bit_board & black_rooks_)
+        return PieceType::kBlackRooks;
+
+    if(bit_board & black_knights_)
+        return PieceType::kBlackKnights;
+
+    if(bit_board & black_king_)
+        return PieceType::kBlackKing;
+
+    if(bit_board & white_pawns_)
+        return PieceType::kWhitePawns;
+
+    if(bit_board & white_bishops_)
+    {
+        if(bit_board & white_rooks_)
+            return PieceType::kWhiteQueens;
+        else
+            return PieceType::kWhiteBishops;
+    }
+
+    if(bit_board & white_rooks_)
+        return PieceType::kWhiteRooks;
+
+    if(bit_board & white_knights_)
+        return PieceType::kWhiteKnights;
+
+    if(bit_board & white_king_)
+        return PieceType::kWhiteKing;
+
+    return PieceType::KAllPieces;
+}
+
 std::string Board::GetPositionFromBitBoard(const uint64_t &bb) const
 {
     std::string position;

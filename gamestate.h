@@ -30,6 +30,7 @@ public:
 
     int NegaMax(std::size_t depth, std::size_t *pv_line);
     int AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv_line);
+    int QuiescenceSearch(int alpha, int beta);
 
     void Search(std::size_t depth, std::atomic<bool> *stop = nullptr);
 
