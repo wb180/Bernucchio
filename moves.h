@@ -36,7 +36,7 @@ private:
     uint64_t *en_passant_;
     std::size_t *castling_rights_;
     Side *active_side_;
-    std::array<MoveInfo, 512> move_infos;
+    std::array<MoveInfo, 4096> move_infos;
     MoveInfo *last_move_;
     std::size_t *fifty_moves_counter_;
 
