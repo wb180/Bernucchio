@@ -168,7 +168,7 @@ bool GameState::MakeMove(const std::string &move_string)
 
 uint64_t GameState::Perft(std::size_t depth)
 {
-    std::size_t *move = nullptr;
+    Move *move = nullptr;
     uint64_t moves_count = 0;
 
     MoveList move_list;
@@ -186,14 +186,14 @@ uint64_t GameState::Perft(std::size_t depth)
 
     while((move = move_list.GetNextMove()))
     {
-        if(moves_.MakeMove(*move))
+        if(moves_.MakeMove(move->move_))
         {
             if(depth > 0)
                 moves_count += Perft(depth - 1);
             else
                 ++moves_count;
 
-            moves_.UnmakeMove(*move);
+            moves_.UnmakeMove(move->move_);
         }
     }
 
@@ -202,7 +202,7 @@ uint64_t GameState::Perft(std::size_t depth)
 
 uint64_t GameState::SplitPerft(std::size_t depth)
 {
-    std::size_t *move = nullptr;
+    Move *move = nullptr;
     uint64_t moves_count = 0;
 
     MoveList move_list;
@@ -224,7 +224,7 @@ uint64_t GameState::SplitPerft(std::size_t depth)
     {
         std::string fen_before = GetFen();
 
-        if(moves_.MakeMove(*move))
+        if(moves_.MakeMove(move->move_))
         {
             if(depth > 0)
             {
@@ -238,7 +238,7 @@ uint64_t GameState::SplitPerft(std::size_t depth)
                 std::cout << std::endl << idx << ": ";
             }
 
-            moves_.UnmakeMove(*move);
+            moves_.UnmakeMove(move->move_);
         }
 
     }
@@ -365,7 +365,7 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
         std::array<std::size_t, kMaxPVLineSize> local_pv_line;
 
         int score = -kMateScore + static_cast<int>(current_depth_);
-        std::size_t *move = nullptr;
+        Move *move = nullptr;
         std::size_t best_move = 0;
         int current_score;
 
@@ -374,7 +374,7 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
         while((move = move_list.GetNextMove()))
         {
 
-            if(moves_.MakeMove(*move))
+            if(moves_.MakeMove(move->move_))
             {
                 current_score = score;
                 ++nodes;
@@ -383,7 +383,7 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
 
                 if(score != current_score)
                 {
-                    best_move = pv_line[0] = *move;
+                    best_move = pv_line[0] = move->move_;
 
                     std::size_t idx = 1;
 
@@ -392,7 +392,7 @@ int GameState::NegaMax(std::size_t depth, std::size_t *pv_line)
 
                 }
 
-                moves_.UnmakeMove(*move);
+                moves_.UnmakeMove(move->move_);
             }
         }
 
@@ -431,18 +431,22 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
         if(active_side_)
         {
             moves_.GetWhiteAttacksAndPromotions(&move_list);
+            move_list.UpdateSortValues(&board_);
+            move_list.Sort();
             moves_.GetWhiteMoves(&move_list);
         }
         else
         {
             moves_.GetBlackAttacksAndPromotions(&move_list);
+            move_list.UpdateSortValues(&board_);
+            move_list.Sort();
             moves_.GetBlackMoves(&move_list);
         }
 
         std::array<std::size_t, kMaxPVLineSize> local_pv_line;
 
         int score = -kMateScore + static_cast<int>(current_depth_);
-        std::size_t *move = nullptr;
+        Move *move = nullptr;
         std::size_t best_move = 0;
         bool is_exist = false;
         bool is_draw_rules = false;
@@ -451,18 +455,18 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
 
         while((move = move_list.GetNextMove()))
         {
-            if(moves_.MakeMove(*move))
+            if(moves_.MakeMove(move->move_))
             {
                 is_exist = true;
 
                 if(current_depth_ == 1 && depth == 1)
                     moves_in_root_++;
 
-                hashes_.UpdateHash(*move, moves_.GetLastMoveInfo(), en_passant_, castlings_);
+                hashes_.UpdateHash(move->move_, moves_.GetLastMoveInfo(), en_passant_, castlings_);
 
                 ++nodes;
                 score = (is_draw_rules = (fifty_moves_counter_ >= 100 || hashes_.Is3FoldRepetition() || !board_.IsSufficientMaterial())) ? 0 : -AlphaBeta(depth - 1, -beta, -alpha, &local_pv_line[0]);
-                moves_.UnmakeMove(*move);
+                moves_.UnmakeMove(move->move_);
 
                 hashes_.UpdateHash();
 
@@ -476,7 +480,7 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
                 {
                     alpha = score;
 
-                    best_move = pv_line[0] = *move;
+                    best_move = pv_line[0] = move->move_;
 
                     if(!is_draw_rules)
                     {
@@ -518,9 +522,17 @@ int GameState::QuiescenceSearch(int alpha, int beta)
     MoveList move_list;
 
     if(active_side_)
+    {
         moves_.GetWhiteAttacksAndPromotions(&move_list, false);
+        move_list.UpdateSortValues(&board_);
+        move_list.Sort();
+    }
     else
+    {
         moves_.GetBlackAttacksAndPromotions(&move_list, false);
+        move_list.UpdateSortValues(&board_);
+        move_list.Sort();
+    }
 
     int score = active_side_ == Side::kWhite ? evaluator_.Score() : -evaluator_.Score();
 
@@ -529,19 +541,19 @@ int GameState::QuiescenceSearch(int alpha, int beta)
     if(alpha < score)
         alpha = score;
 
-    std::size_t *move = nullptr;
-    bool is_exist = false;
+    Move *move = nullptr;
+    //bool is_exist = false;
 
     while((move = move_list.GetNextMove()))
     {
-        if(moves_.MakeMove(*move))
+        if(moves_.MakeMove(move->move_))
         {
-            is_exist = true;
+            //is_exist = true;
             //hashes_.UpdateHash(*move, moves_.GetLastMoveInfo(), en_passant_, castlings_);
 
             ++nodes;
             score = -QuiescenceSearch(-beta, -alpha);
-            moves_.UnmakeMove(*move);
+            moves_.UnmakeMove(move->move_);
 
             //hashes_.UpdateHash();
 

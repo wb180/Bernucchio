@@ -3,6 +3,7 @@
 
 #include "board.h"
 #include "constants.h"
+#include "move.h"
 #include "moveinfo.h"
 
 #include <array>
@@ -12,7 +13,7 @@ class MoveList
 public:
     MoveList();
 
-    std::size_t *GetNextMove();
+    Move *GetNextMove();
     void AddMoves(std::size_t from, uint64_t bit_board);
     void AddPawnMoves(bool side, uint64_t bit_board, PawnMoveType move_type);
     void AddPawnPromotions(bool side, uint64_t bit_board, PawnMoveType move_type);
@@ -20,12 +21,12 @@ public:
     void Reset();
     bool Empty() const;
     void Sort();
-    void UpdateSortValues(Board* board);
+    void UpdateSortValues(const Board* board);
 
 private:
-    std::array<std::size_t, 256> moves_;
-    std::size_t *last_move_;
-    std::size_t *current_move_;
+    std::array<Move, 256> moves_;
+    Move *last_move_;
+    Move *current_move_;
 };
 
 #endif // MOVELIST_H
