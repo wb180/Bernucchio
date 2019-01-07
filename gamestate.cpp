@@ -443,7 +443,7 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
             moves_.GetBlackMoves(&move_list);
         }
 
-        std::array<std::size_t, kMaxPVLineSize> local_pv_line;
+        std::array<std::size_t, kMaxPVLineSize> local_pv_line = {};
 
         int score = -kMateScore + static_cast<int>(current_depth_);
         Move *move = nullptr;
