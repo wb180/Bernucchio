@@ -25,6 +25,7 @@ const std::string kMovesToGo = "movestogo";
 const std::string kInfinite = "infinite";
 const std::string kStop = "stop";
 const std::string kSpeedTest = "speedtest";
+const std::string kMoveTime = "movetime";
 
 UCI::UCI()
 {
@@ -46,7 +47,7 @@ void UCI::Loop()
 //        if(command.empty())
 //            continue;
 
-//        Logger::GetInstance("log.txt") << command;
+        Logger::GetInstance("log.txt") << command;
 
         std::istringstream ss{ command };
         ss >> token;
@@ -144,6 +145,12 @@ void UCI::Loop()
                 {
                     ss >> number_value;
                     TimeManager::GetInstance().SetMovesToGo(number_value);
+                }
+                else if(token == kMoveTime)
+                {
+                    ss >> number_value;
+                    TimeManager::GetInstance().SetOurTime(number_value);
+                    TimeManager::GetInstance().SetMovesToGo(1);
                 }
             }
 
