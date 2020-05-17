@@ -307,6 +307,79 @@ PieceType Board::GetPieceOnSquare(std::size_t square) const
     return PieceType::KAllPieces;
 }
 
+void Board::InvertPieces()
+{
+    std::swap(blacks_, whites_);
+    std::swap(black_pawns_, white_pawns_);
+    std::swap(black_knights_, white_knights_);
+    std::swap(black_bishops_, white_bishops_);
+    std::swap(black_rooks_, white_rooks_);
+    std::swap(black_king_, white_king_);
+}
+
+void Board::FlipVertically()
+{
+     whites_ = FlipBitboardVertically(whites_);
+     white_pawns_ = FlipBitboardVertically(white_pawns_);
+     white_knights_ = FlipBitboardVertically(white_knights_);
+     white_bishops_ = FlipBitboardVertically(white_bishops_);
+     white_rooks_ = FlipBitboardVertically(white_rooks_);
+     white_king_ = FlipBitboardVertically(white_king_);
+
+     blacks_ = FlipBitboardVertically(blacks_);
+     black_pawns_ = FlipBitboardVertically(black_pawns_);
+     black_knights_ = FlipBitboardVertically(black_knights_);
+     black_bishops_ = FlipBitboardVertically(black_bishops_);
+     black_bishops_ = FlipBitboardVertically(black_rooks_);
+     black_king_ = FlipBitboardVertically(black_king_);
+
+     occupied_ = FlipBitboardVertically(occupied_);
+     empty_ = FlipBitboardVertically(empty_);
+}
+
+void Board::FlipHorizontally()
+{
+    whites_ = FlipBitboardHorizontally(whites_);
+    white_pawns_ = FlipBitboardHorizontally(white_pawns_);
+    white_knights_ = FlipBitboardHorizontally(white_knights_);
+    white_bishops_ = FlipBitboardHorizontally(white_bishops_);
+    white_rooks_ = FlipBitboardHorizontally(white_rooks_);
+    white_king_ = FlipBitboardHorizontally(white_king_);
+
+    blacks_ = FlipBitboardHorizontally(blacks_);
+    black_pawns_ = FlipBitboardHorizontally(black_pawns_);
+    black_knights_ = FlipBitboardHorizontally(black_knights_);
+    black_bishops_ = FlipBitboardHorizontally(black_bishops_);
+    black_bishops_ = FlipBitboardHorizontally(black_rooks_);
+    black_king_ = FlipBitboardHorizontally(black_king_);
+
+    occupied_ = FlipBitboardHorizontally(occupied_);
+    empty_ = FlipBitboardHorizontally(empty_);
+}
+
+bool Board::IsKingOnTheLeftHalf(Side side) const
+{
+    return (side == Side::kWhite ? white_king_ : black_king_) & kLeftHalf;
+}
+
+bool Board::IsEnPassantPossible(Side side, uint64_t en_passant) const
+{
+    bool result = false;
+
+    if( side == Side::kWhite )
+    {
+        result |= (white_pawns_ << kMoveRight) & kEmptyLeft & en_passant;
+        result |= (white_pawns_ << kMoveLeft) & kEmptyRight & en_passant;
+    }
+    else
+    {
+        result |= (black_pawns_ >> kMoveRight) & kEmptyRight & en_passant;
+        result |= (black_pawns_ >> kMoveLeft) & kEmptyLeft & en_passant;
+    }
+
+    return result;
+}
+
 std::string Board::GetPositionFromBitBoard(const uint64_t &bb) const
 {
     std::string position;

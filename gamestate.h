@@ -11,6 +11,12 @@
 #include <functional>
 #include <vector>
 
+struct Signature
+{
+    uint8_t buf[64];
+    int length_;
+};
+
 class GameState
 {
 public:
@@ -33,6 +39,12 @@ public:
     int QuiescenceSearch(int alpha, int beta);
 
     void Search(std::size_t depth, std::atomic<bool> *stop = nullptr);
+
+    void getSignature(Signature *signature);
+
+    bool ByteToMove(uint8_t byte, Move *move);
+
+    Moves *GetMoves(){return &moves_;}
 
 private:
     Board board_;
@@ -59,6 +71,9 @@ private:
     uint64_t nodes;
     std::size_t moves_in_root_;
     std::size_t current_depth_;
+
+private:
+    bool is_en_passant_possible();
 };
 
 #endif // GAMESTATE_H

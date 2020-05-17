@@ -10,6 +10,7 @@ class Board
     friend class Moves;
     friend class HashList;
     friend class Evaluator;
+    friend class CTGReader;
 
 public:
     Board();
@@ -27,6 +28,14 @@ public:
     bool operator!=(const Board &b) const;
 
     PieceType GetPieceOnSquare(std::size_t square) const;
+
+    void InvertPieces();
+    void FlipVertically();
+    void FlipHorizontally();
+
+    bool IsKingOnTheLeftHalf(Side side) const;
+
+    bool IsEnPassantPossible(Side side, uint64_t bb) const;
 
 private:
 

@@ -74,4 +74,20 @@ inline uint64_t GetBitMaskNextPermutation(uint64_t permutation, uint64_t mask)
     return permutation;
 }
 
+inline uint64_t FlipBitboardVertically(uint64_t bb)
+{
+    return __builtin_bswap64(bb);
+}
+
+inline uint64_t FlipBitboardHorizontally(uint64_t bb)
+{
+    bb = ((bb >> 1) & 0x5555555555555555) +  2*(bb & 0x5555555555555555);
+    bb = ((bb >> 2) & 0x3333333333333333) +  4*(bb & 0x3333333333333333);
+    bb = ((bb >> 4) & 0x0f0f0f0f0f0f0f0f) + 16*(bb & 0x0f0f0f0f0f0f0f0f);
+
+    return bb;
+}
+
+void append_bits_reverse(uint8_t *buf, uint8_t bits, int bit_position, int num_bits);
+
 #endif // BITS_FUNCTIONS_H

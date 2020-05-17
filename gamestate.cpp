@@ -1,11 +1,13 @@
 #include "bits_functions.h"
 #include "constants.h"
+#include "ctg.h"
 #include "gamestate.h"
 #include "logger.h"
 #include "timemanager.h"
 
 #include <iostream>
 #include <chrono>
+#include <cstring>
 #include <sstream>
 
 GameState::GameState() : moves_(&board_, &en_passant_, &castlings_, &active_side_, &fifty_moves_counter_), hashes_(&board_), evaluator_(&board_)
@@ -465,7 +467,12 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
                 hashes_.UpdateHash(move->move_, moves_.GetLastMoveInfo(), en_passant_, castlings_);
 
                 ++nodes;
-                score = (is_draw_rules = (fifty_moves_counter_ >= 100 || hashes_.Is3FoldRepetition() || !board_.IsSufficientMaterial())) ? 0 : -AlphaBeta(depth - 1, -beta, -alpha, &local_pv_line[0]);
+
+                bool extend = false;
+                if(moves_.IsKingAttacked(active_side_))
+                    extend = true;
+
+                score = (is_draw_rules = (fifty_moves_counter_ >= 100 || hashes_.Is3FoldRepetition() || !board_.IsSufficientMaterial())) ? 0 : -AlphaBeta(extend ? depth : depth - 1, -beta, -alpha, &local_pv_line[0]);
                 moves_.UnmakeMove(move->move_);
 
                 hashes_.UpdateHash();
@@ -582,55 +589,68 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
     auto time_start = std::chrono::steady_clock::now();
     found_any_move_ = false;
 
-    for(std::size_t iterative_depth = 0; iterative_depth <= depth; ++iterative_depth)
+    if( !found_any_move_ && false/*use_book*/ )
     {
-        current_depth_ = 0;
-
-        if(iterative_depth == 1)
-            moves_in_root_ = 0;
-
-        score = AlphaBeta(iterative_depth, -kMateScore, kMateScore, &pv_line[0]);
-
-        if( found_any_move_ && ((stop_ && *stop_) || time_out))
-            break;
-        else
+        Signature signature;
+        getSignature(&signature);
+        Move move;
+        if( CTGReader::GetInstance("Perfect2019").GetMove(this, &signature, &move) )
         {
-            std::ostringstream ss;
-
-            ss << "info depth " << iterative_depth << " time " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time_start).count()  <<
-                         " nodes " << nodes << " pv ";
-
-            for(auto move : pv_line)
-            {
-                if(!move)
-                    break;
-
-                ss << PrintMove(move) << " ";
-            }
-
-            ss << " score ";
-
-            if(score > kHighestScore || score < -kHighestScore)
-            {
-                ss << "mate " << (score > 0 ? (kMateScore - score)/2 + 1 : (-score - kMateScore)/ 2) << std::endl;
-            }
-            else
-                ss << "cp " << score << std::endl;
-
-            std::cout << ss.str();
-            std::flush(std::cout);
-
-
-            best_move = pv_line[0];
+            best_move = move.move_;
             found_any_move_ = true;
-
-            if(!TimeManager::GetInstance().IsInfinite() && iterative_depth == 1 && moves_in_root_ == 1)
-                break;
-
-            if(!TimeManager::GetInstance().IsInfinite() && TimeManager::GetInstance().TimeElapsed() >= 0.5)
-                break;
         }
     }
+
+    if(!found_any_move_)
+        for(std::size_t iterative_depth = 0; iterative_depth <= depth; ++iterative_depth)
+        {
+            current_depth_ = 0;
+
+            if(iterative_depth == 1)
+                moves_in_root_ = 0;
+
+            score = AlphaBeta(iterative_depth, -kMateScore, kMateScore, &pv_line[0]);
+
+            if( found_any_move_ && ((stop_ && *stop_) || time_out))
+                break;
+            else
+            {
+                std::ostringstream ss;
+
+                ss << "info depth " << iterative_depth << " time " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time_start).count()  <<
+                             " nodes " << nodes << " pv ";
+
+                for(auto move : pv_line)
+                {
+                    if(!move)
+                        break;
+
+                    ss << PrintMove(move) << " ";
+                }
+
+                ss << " score ";
+
+                if(score > kHighestScore || score < -kHighestScore)
+                {
+                    ss << "mate " << (score > 0 ? (kMateScore - score)/2 + 1 : (-score - kMateScore)/ 2) << std::endl;
+                }
+                else
+                    ss << "cp " << score << std::endl;
+
+                std::cout << ss.str();
+                std::flush(std::cout);
+
+
+                best_move = pv_line[0];
+                found_any_move_ = true;
+
+                if(!TimeManager::GetInstance().IsInfinite() && iterative_depth == 1 && moves_in_root_ == 1)
+                    break;
+
+                if(!TimeManager::GetInstance().IsInfinite() && TimeManager::GetInstance().TimeElapsed() >= 0.5)
+                    break;
+            }
+        }
 
     if(best_move)
     {
@@ -640,4 +660,409 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
         std::flush(std::cout);
     }
 
+}
+
+void GameState::getSignature(Signature *signature)
+{
+    memset(signature, 0, sizeof(Signature));
+    int bit_position = 8;
+    uint8_t bits = 0, num_bits = 0;
+
+    bool flip_board = active_side_ == Side::kBlack;
+    bool mirror_board =  !castlings_ && board_.IsKingOnTheLeftHalf(flip_board ? Side::kBlack : Side::kWhite);
+
+    for (std::size_t file = 0; file < kBoardSize; ++file)
+    {
+        for (std::size_t rank = 0; rank < kBoardSize; ++rank)
+        {
+            switch (board_.GetPieceOnSquare((flip_board ? 7 - rank : rank) * 8 + (mirror_board ? 7 - file : file)))
+            {
+                case KAllPieces:
+                    bits = 0x0;
+                    num_bits = 1;
+                    break;
+                case kWhitePawns:
+                    if(!flip_board)
+                    {
+                        bits = 0x3;
+                        num_bits = 3;
+                    }
+                    else
+                    {
+                        bits = 0x7;
+                        num_bits = 3;
+                    }
+                    break;
+                case kBlackPawns:
+                    if(!flip_board)
+                    {
+                        bits = 0x7;
+                        num_bits = 3;
+                    }
+                    else
+                    {
+                        bits = 0x3;
+                        num_bits = 3;
+                    }
+                    break;
+                case kWhiteKnights:
+                    if(!flip_board)
+                    {
+                        bits = 0x9;
+                        num_bits = 5;
+                    }
+                    else
+                    {
+                        bits = 0x19;
+                        num_bits = 5;
+                    }
+                    break;
+                case kBlackKnights:
+                    if(!flip_board)
+                    {
+                        bits = 0x19;
+                        num_bits = 5;
+                    }
+                    else
+                    {
+                        bits = 0x9;
+                        num_bits = 5;
+                    }
+                    break;
+                case kWhiteBishops:
+                    if(!flip_board)
+                    {
+                        bits = 0x5;
+                        num_bits = 5;
+                    }
+                    else
+                    {
+                        bits = 0x15;
+                        num_bits = 5;
+                    }
+                    break;
+                case kBlackBishops:
+                    if(!flip_board)
+                    {
+                        bits = 0x15;
+                        num_bits = 5;
+                    }
+                    else
+                    {
+                        bits = 0x5;
+                        num_bits = 5;
+                    }
+                    break;
+                case kWhiteRooks:
+                    if(!flip_board)
+                    {
+                        bits = 0xD;
+                        num_bits = 5;
+                    }
+                    else
+                    {
+                        bits = 0x1D;
+                        num_bits = 5;
+                    }
+                    break;
+                case kBlackRooks:
+                    if(!flip_board)
+                    {
+                        bits = 0x1D;
+                        num_bits = 5;
+                    }
+                    else
+                    {
+                        bits = 0xD;
+                        num_bits = 5;
+                    }
+                    break;
+                case kWhiteQueens:
+                    if(!flip_board)
+                    {
+                        bits = 0x11;
+                        num_bits = 6;
+                    }
+                    else
+                    {
+                        bits = 0x31;
+                        num_bits = 6;
+                    }
+                    break;
+                case kBlackQueens:
+                    if(!flip_board)
+                    {
+                        bits = 0x31;
+                        num_bits = 6;
+                    }
+                    else
+                    {
+                        bits = 0x11;
+                        num_bits = 6;
+                    }
+                    break;
+                case kWhiteKing:
+                    if(!flip_board)
+                    {
+                        bits = 0x1;
+                        num_bits = 6;
+                    }
+                    else
+                    {
+                        bits = 0x21;
+                        num_bits = 6;
+                    }
+                    break;
+                case kBlackKing:
+                    if(!flip_board)
+                    {
+                        bits = 0x21;
+                        num_bits = 6;
+                    }
+                    else
+                    {
+                        bits = 0x1;
+                        num_bits = 6;
+                    }
+                    break;
+            default: break;
+            }
+            append_bits_reverse(signature->buf, bits, bit_position, num_bits);
+            bit_position += num_bits;
+        }
+    }
+
+    int ep = -1;
+    int flag_bit_length = 0;
+
+    if( is_en_passant_possible() )
+    {
+        ep = GetLSBPos(en_passant_)%kBoardSize;
+        if(mirror_board)
+            ep = 7 - ep;
+        flag_bit_length = 3;
+    }
+
+    int castle = 0;
+    if(castlings_ & (flip_board ? kBlackCastling_0_0 : kWhiteCastling_0_0))
+        castle += 4;
+    if(castlings_ & (flip_board ? kBlackCastling_0_0_0: kWhiteCastling_0_0_0))
+        castle += 8;
+    if(castlings_  & (flip_board ? kWhiteCastling_0_0: kBlackCastling_0_0))
+        castle += 1;
+    if(castlings_ & (flip_board ? kWhiteCastling_0_0_0: kBlackCastling_0_0_0))
+        castle += 2;
+    if(castle)
+        flag_bit_length += 4;
+
+    uint8_t flag_bits = castle;
+
+    if (ep != -1)
+    {
+        flag_bits <<= 3;
+
+        for (int i=0; i<3; ++i, ep>>=1)
+            if (ep&1)
+                flag_bits |= (1<<(2-i));
+    }
+
+    int pad_bits = 0;
+
+    if (8-(bit_position % 8) < flag_bit_length)
+    {
+        pad_bits = 8 - (bit_position % 8);
+        append_bits_reverse(signature->buf, 0, bit_position, pad_bits);
+        bit_position += pad_bits;
+    }
+
+    pad_bits = 8 - (bit_position % 8) - flag_bit_length;
+    if (pad_bits < 0) pad_bits += 8;
+
+    append_bits_reverse(signature->buf, 0, bit_position, pad_bits);
+    bit_position += pad_bits;
+    append_bits_reverse(signature->buf, flag_bits, bit_position, flag_bit_length);
+    bit_position += flag_bit_length;
+    signature->length_ = (bit_position + 7) / 8;
+
+    signature->buf[0] = ((uint8_t)(signature->length_));
+    if(ep != -1)
+        signature->buf[0] |= 1<<5;
+    if(castle)
+        signature->buf[0] |= 1<<6;
+}
+
+bool GameState::is_en_passant_possible()
+{
+    return board_.IsEnPassantPossible(active_side_, en_passant_);
+}
+
+void append_bits_reverse(uint8_t *buf, uint8_t bits, int bit_position, int num_bits)
+{
+    uint8_t *sig_byte = &buf[bit_position/8];
+    int offset = bit_position % 8;
+    for (int i=offset; i<num_bits+offset; ++i, bits>>=1)
+    {
+        if (bits & 1) *sig_byte |= 1 << (7-(i%8));
+        if (i%8 == 7) *(++sig_byte) = 0;
+    }
+}
+
+bool GameState::ByteToMove(uint8_t byte, Move *move)
+{
+    const char* piece_code =
+        "PNxQPQPxQBKxPBRNxxBKPBxxPxQBxBxxxRBQPxBPQQNxxPBQNQBxNxNQQQBQBxxx"
+        "xQQxKQxxxxPQNQxxRxRxBPxxxxxxPxxPxQPQxxBKxRBxxxRQxxBxQxxxxBRRPRQR"
+        "QRPxxNRRxxNPKxQQxxQxQxPKRRQPxQxBQxQPxRxxxRxQxRQxQPBxxRxQxBxPQQKx"
+        "xBBBRRQPPQBPBRxPxPNNxxxQRQNPxxPKNRxRxQPQRNxPPQQRQQxNRBxNQQQQxQQx";
+
+    const int piece_index[256] =
+    {
+        5, 2, 9, 2, 2, 1, 4, 9, 2, 2, 1, 9, 1, 1, 2, 1,
+        9, 9, 1, 1, 8, 1, 9, 9, 7, 9, 2, 1, 9, 2, 9, 9,
+        9, 2, 2, 2, 8, 9, 1, 3, 1, 1, 2, 9, 9, 6, 1, 1,
+        2, 1, 2, 9, 1, 9, 1, 1, 2, 1, 1, 2, 1, 9, 9, 9,
+        9, 2, 1, 9, 1, 1, 9, 9, 9, 9, 8, 1, 2, 2, 9, 9,
+        1, 9, 1, 9, 2, 3, 9, 9, 9, 9, 9, 9, 7, 9, 9, 5,
+        9, 1, 2, 2, 9, 9, 1, 1, 9, 2, 1, 0, 9, 9, 1, 2,
+        9, 9, 2, 9, 1, 9, 9, 9, 9, 2, 1, 2, 3, 2, 1, 1,
+        1, 1, 6, 9, 9, 1, 1, 1, 9, 9, 1, 1, 1, 9, 2, 1,
+        9, 9, 2, 9, 1, 9, 2, 1, 1, 1, 1, 3, 9, 1, 9, 2,
+        2, 9, 1, 8, 9, 2, 9, 9, 9, 2, 9, 2, 9, 2, 2, 9,
+        2, 6, 1, 9, 9, 2, 9, 1, 9, 2, 9, 5, 2, 2, 1, 9,
+        9, 1, 2, 1, 2, 2, 2, 7, 7, 2, 2, 6, 2, 1, 9, 4,
+        9, 2, 2, 2, 9, 9, 9, 1, 2, 1, 1, 1, 9, 9, 5, 1,
+        2, 1, 9, 2, 9, 1, 4, 1, 1, 1, 9, 4, 1, 1, 2, 1,
+        2, 1, 9, 2, 2, 2, 0, 1, 2, 2, 2, 2, 9, 1, 2, 9
+    };
+
+    const int forward[256] =
+    {
+        1,-1, 9, 0, 1, 1, 1, 9, 0, 6,-1, 9, 1, 3, 0,-1,
+        9, 9, 7, 1, 1, 5, 9, 9, 1, 9, 6, 1, 9, 7, 9, 9,
+        9, 0, 2, 6, 1, 9, 7, 1, 5, 0,-2, 9, 9, 1, 1, 0,
+       -2, 0, 5, 9, 2, 9, 1, 4, 4, 0, 6, 5, 5, 9, 9, 9,
+        9, 5, 7, 9,-1, 3, 9, 9, 9, 9, 2, 5, 2, 1, 9, 9,
+        6, 9, 0, 9, 1, 1, 9, 9, 9, 9, 9, 9, 1, 9, 9, 2,
+        9, 6, 2, 7, 9, 9, 3, 1, 9, 7, 4, 0, 9, 9, 0, 7,
+        9, 9, 7, 9, 0, 9, 9, 9, 9, 6, 3, 6, 1, 1, 3, 0,
+        6, 1, 1, 9, 9, 2, 0, 5, 9, 9,-2, 1,-1, 9, 2, 0,
+        9, 9, 1, 9, 3, 9, 1, 0, 0, 4, 6, 2, 9, 2, 9, 4,
+        3, 9, 2, 1, 9, 5, 9, 9, 9, 0, 9, 6, 9, 0, 3, 9,
+        4, 2, 6, 9, 9, 0, 9, 5, 9, 3, 9, 1, 0, 2, 0, 9,
+        9, 2, 2, 2, 0, 4, 5, 1, 2, 7, 3, 1, 5, 0, 9, 1,
+        9, 1, 1, 1, 9, 9, 9, 1, 0, 2,-2, 2, 9, 9, 1, 1,
+       -1, 7, 9, 3, 9, 0, 2, 4, 2,-1, 9, 1, 1, 7, 1, 0,
+        0, 1, 9, 2, 2, 1, 0, 1, 0, 6, 0, 2, 9, 7, 3, 9
+    };
+
+    const int left[256] =
+    {
+       -1, 2, 9,-2, 0, 0, 1, 9,-4,-6, 0, 9, 1,-3,-3, 2,
+        9, 9,-7, 0,-1,-5, 9, 9, 0, 9, 0, 1, 9,-7, 9, 9,
+        9,-7, 2,-6, 1, 9, 7, 1,-5,-6,-1, 9, 9,-1,-1,-1,
+        1,-3,-5, 9,-1, 9,-2, 0, 4,-5,-6, 5, 5, 9, 9, 9,
+        9,-5, 7, 9,-1,-3, 9, 9, 9, 9, 0, 5,-1, 0, 9, 9,
+        0, 9,-6, 9, 1, 0, 9, 9, 9, 9, 9, 9,-1, 9, 9, 0,
+        9,-6, 0, 7, 9, 9, 3,-1, 9, 0,-4, 0, 9, 9,-5,-7,
+        9, 9, 7, 9,-2, 9, 9, 9, 9, 6, 0, 0,-1, 0, 3,-1,
+        6, 0, 1, 9, 9, 1,-7, 0, 9, 9,-1,-1, 1, 9, 2,-7,
+        9, 9,-1, 9, 0, 9,-1, 1,-3, 0, 0, 0, 9, 0, 9, 4,
+        0, 9,-2, 0, 9, 0, 9, 9, 9,-2, 9, 6, 9,-4,-3, 9,
+        0, 0, 6, 9, 9,-5, 9, 0, 9,-3, 9, 0,-5, 0,-1, 9,
+        9,-2,-2, 2,-1, 0, 0, 1, 0, 0, 3, 0, 5,-2, 9, 0,
+        9, 1,-2, 2, 9, 9, 9, 1,-6, 2, 1, 0, 9, 9, 1, 1,
+       -2, 0, 9, 0, 9,-4, 0,-4, 0,-2, 9,-1, 0,-7, 1,-4,
+       -7,-1, 9, 1, 0,-1, 0, 2,-1, 0,-3,-2, 9, 0, 3, 9
+    };
+
+    bool flip_board = active_side_ == Side::kBlack;
+    bool mirror_board =  !castlings_ && board_.IsKingOnTheLeftHalf(flip_board ? Side::kBlack : Side::kWhite);
+    int file_from = -1, file_to = -1, rank_from = -1, rank_to = -1;
+
+    if (byte == 107)
+    {
+        file_from = 4;
+        file_to = 6;
+        rank_from = rank_to = flip_board ? 7 : 0;
+
+        move->move_ = (file_from + rank_from * 8) | ((file_to + rank_to * 8) << 6) | MoveFlags::kCastling;
+        return true;
+    }
+
+    if (byte == 246)
+    {
+        file_from = 4;
+        file_to = 2;
+        rank_from = rank_to = flip_board ? 7 : 0;
+
+        move->move_ = (file_from + rank_from * 8) | ((file_to + rank_to * 8) << 6) | MoveFlags::kCastling;
+        return true;
+    }
+
+    PieceType pc = PieceType::KAllPieces;
+
+    switch (piece_code[byte])
+    {
+        case 'P': !flip_board ? pc = PieceType::kWhitePawns : pc = PieceType::kBlackPawns; break;
+        case 'N': !flip_board ? pc = PieceType::kWhiteKnights : pc = PieceType::kBlackKnights; break;
+        case 'B': !flip_board ? pc = PieceType::kWhiteBishops : pc = PieceType::kBlackBishops; break;
+        case 'R': !flip_board ? pc = PieceType::kWhiteRooks : pc = PieceType::kBlackBishops; break;
+        case 'Q': !flip_board ? pc = PieceType::kWhiteQueens : pc = PieceType::kBlackQueens; break;
+        case 'K': !flip_board ? pc = PieceType::kWhiteKing : pc = PieceType::kBlackKing; break;
+        default:;
+    }
+
+    int nth_piece = piece_index[byte], piece_count = 0;
+    bool found = false;
+
+    for (int file = 0; file < 8 && !found; ++file)
+    {
+        for (int rank = 0; rank < 8 && !found; ++rank)
+        {
+            PieceType piece = board_.GetPieceOnSquare((flip_board ? 7 - rank : rank) * 8 + (mirror_board ? 7 - file : file));
+            if (piece == pc)
+                piece_count++;
+
+            if (piece_count == nth_piece)
+            {
+                file_from = file;
+                rank_from = rank;
+                found = true;
+            }
+        }
+    }
+
+    file_to = file_from - left[byte];
+    file_to = (file_to + 8) % 8;
+    rank_to = rank_from + forward[byte];
+    rank_to = (rank_to + 8) % 8;
+
+    if (flip_board)
+    {
+        rank_from = 7 - rank_from;
+        rank_to = 7 - rank_to;
+    }
+
+    if (mirror_board)
+    {
+        file_from = 7 - file_from;
+        file_to = 7 - file_to;
+    }
+
+    move->move_ = (file_from + rank_from * 8) | ((file_to + rank_to * 8) << 6);
+
+    if(((!flip_board && pc == PieceType::kWhitePawns) || (flip_board && pc == PieceType::kBlackPawns)) && ((flip_board && rank_from == 0 && rank_to == 1) || (!flip_board && rank_from == 6 && rank_to == 7)))
+    {
+        move->move_ |= (MoveFlags::kPromotion & (PromotionType::kQueen << 14));
+    }
+
+    if(((!flip_board && pc == PieceType::kWhitePawns) || (flip_board && pc == PieceType::kBlackPawns)) && ((flip_board && rank_from == 5 && rank_to == 4) || (!flip_board && rank_from == 4 && rank_to == 5)))
+    {
+        if(board_.GetPieceOnSquare(rank_to * 8 + file_to) == PieceType::KAllPieces && file_to != file_from)
+        {
+            move->move_ |= (MoveFlags::kEnPassant);
+        }
+    }
+
+    return true;
 }

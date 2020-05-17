@@ -37,8 +37,8 @@ IF(MINGW)
     SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${MINGW_COMPILE_FLAGS}")
 ENDIF()
 
-SET(SOURCES ${SOURCES} main.cpp board.cpp logger.cpp moves.cpp gamestate.cpp movelist.cpp hashlist.cpp magics.cpp uci.cpp timemanager.cpp search.cpp evaluator.cpp)
-SET(HEADERS bits_functions.h board.h logger.h constants.h moves.h gamestate.h movelist.h hashlist.h magics.hpp moveinfo.h uci.h timemanager.h search.h evaluator.h move.h)
+SET(SOURCES ${SOURCES} main.cpp board.cpp logger.cpp moves.cpp gamestate.cpp movelist.cpp hashlist.cpp magics.cpp uci.cpp timemanager.cpp search.cpp evaluator.cpp ctg.cpp)
+SET(HEADERS bits_functions.h board.h logger.h constants.h moves.h gamestate.h movelist.h hashlist.h magics.hpp moveinfo.h uci.h timemanager.h search.h evaluator.h move.h ctg.h)
 SET(OTHER readme.md)
 
 SET(LIBS ${LIBS} pthread)

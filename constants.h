@@ -170,6 +170,8 @@ const uint64_t kThirdRow   = 0x0000000000FF0000;
 const uint64_t kSecondRow  = 0x000000000000FF00;
 const uint64_t kFirstRow   = 0x00000000000000FF;
 
+const uint64_t kLeftHalf   = 0x0F0F0F0F0F0F0F0F;
+
 const std::size_t kMaxPVLineSize = 100;
 
 const std::array<uint64_t, 64> kWhitePawnsAttacks = {{

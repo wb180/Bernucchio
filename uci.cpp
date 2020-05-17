@@ -1,3 +1,4 @@
+#include "ctg.h"
 #include "logger.h"
 #include "search.h"
 #include "timemanager.h"
