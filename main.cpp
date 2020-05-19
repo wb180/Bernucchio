@@ -4,6 +4,7 @@
 #include "moves.h"
 #include "uci.h"
 #include "gamestate.h"
+#include "optimization.h"
 
 #ifdef BUILD_WITH_TESTS
     #include <gtest/gtest.h>
@@ -22,6 +23,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
     else
     {
 #endif
+
+        //optimize();
+
         UCI uci;
         uci.Loop();
 

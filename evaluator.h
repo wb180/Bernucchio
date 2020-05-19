@@ -3,12 +3,15 @@
 
 #include "board.h"
 
+#include <vector>
+
 class Evaluator
 {
 public:
     explicit Evaluator(Board *board);
 
     int Score();
+    int Score(std::vector<int>&);
 
 private:
     Board *board_;

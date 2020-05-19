@@ -25,6 +25,10 @@ public:
     bool SetFen(const std::string &fen_string);
     bool MakeMove(const std::string &move);
     Side GetOurSide();
+    int GetScore(std::vector<int> w)
+    {
+        return gamestate_.GetScore(w);
+    }
 
     ~Search();
     void Wake();

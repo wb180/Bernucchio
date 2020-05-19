@@ -423,7 +423,7 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
 {
     if(!found_any_move_ || !((stop_ && *stop_) || time_out))
     {
-        if(depth == 0)
+        if(depth == 0 || current_depth_ > 30)
         {
             return QuiescenceSearch(alpha, beta);
         }

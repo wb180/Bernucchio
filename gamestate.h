@@ -46,6 +46,11 @@ public:
 
     Moves *GetMoves(){return &moves_;}
 
+    int GetScore(std::vector<int> &w)
+    {
+        return evaluator_.Score(w);
+    }
+
 private:
     Board board_;
     Moves moves_;
