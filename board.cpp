@@ -40,6 +40,11 @@ bool Board::SetFen(const std::string &fen_string)
     white_pawns_ = white_knights_  = white_bishops_  =
             white_rooks_ = white_king_ = 0;
 
+    black_pawns_count = black_knights_count  = black_bishops_count =
+            black_rooks_count  = 0;
+    white_pawns_count = white_knights_count  = white_bishops_count  =
+            white_rooks_count = 0;
+
     for(auto&& symbol : fen_string)
     {
         if(symbol >= '1' && symbol <= '8')
@@ -175,6 +180,12 @@ void Board::AddPiece(PieceType piece)
 {
     switch(piece)
     {
+    case PieceType::kWhitePawns:
+        ++white_pawns_count;
+        break;
+    case PieceType::kBlackPawns:
+        ++black_pawns_count;
+        break;
     case PieceType::kWhiteQueens:
         ++white_queens_count;
         break;
@@ -378,6 +389,15 @@ bool Board::IsEnPassantPossible(Side side, uint64_t en_passant) const
     }
 
     return result;
+}
+
+int Board::totalMaterial() const
+{
+    return kPieceValue[0] * (black_pawns_count + white_pawns_count) +
+            kPieceValue[1] * (black_knights_count + white_knights_count) +
+            kPieceValue[2] * (black_bishops_count + white_bishops_count) +
+            kPieceValue[3] * (black_rooks_count + white_rooks_count) +
+            kPieceValue[4] * (black_queens_count + white_queens_count);
 }
 
 std::string Board::GetPositionFromBitBoard(const uint64_t &bb) const

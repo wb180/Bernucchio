@@ -37,6 +37,8 @@ public:
 
     bool IsEnPassantPossible(Side side, uint64_t bb) const;
 
+    int totalMaterial() const;
+
 private:
 
     uint64_t whites_;
@@ -53,16 +55,16 @@ private:
     uint64_t black_rooks_;
     uint64_t black_king_;
 
-    std::size_t black_pawns_count;
-    std::size_t white_pawns_count;
-    std::size_t black_knights_count;
-    std::size_t white_knights_count;
-    std::size_t black_bishops_count;
-    std::size_t white_bishops_count;
-    std::size_t black_rooks_count;
-    std::size_t white_rooks_count;
-    std::size_t black_queens_count;
-    std::size_t white_queens_count;
+    int black_pawns_count;
+    int white_pawns_count;
+    int black_knights_count;
+    int white_knights_count;
+    int black_bishops_count;
+    int white_bishops_count;
+    int black_rooks_count;
+    int white_rooks_count;
+    int black_queens_count;
+    int white_queens_count;
 
     uint64_t occupied_;
     uint64_t empty_;

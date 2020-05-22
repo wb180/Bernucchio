@@ -969,22 +969,27 @@ void Moves::UnmakeMove(std::size_t move)
             case PromotionType::kQueen:
                 board_->white_bishops_ ^= to;
                 board_->white_rooks_ ^= to;
+                board_->RemovePiece(PieceType::kWhiteQueens);
                 break;
 
             case PromotionType::kRook:
                 board_->white_rooks_ ^= to;
+                board_->RemovePiece(PieceType::kWhiteRooks);
                 break;
 
             case PromotionType::kBishop:
                 board_->white_bishops_ ^= to;
+                board_->RemovePiece(PieceType::kWhiteBishops);
                 break;
 
             case PromotionType::kKnight:
                 board_->white_knights_ ^= to;
+                board_->RemovePiece(PieceType::kWhiteKnights);
                 break;
             }
 
             board_->white_pawns_ ^= to;
+            board_->AddPiece(PieceType::kWhitePawns);
         }
 
         if(board_->white_pawns_ & to)
@@ -1072,6 +1077,8 @@ void Moves::UnmakeMove(std::size_t move)
             board_->occupied_ ^= to;
             break;
         }
+
+        board_->AddPiece(last_move_->captured_);
     }
     else
     {
@@ -1082,22 +1089,27 @@ void Moves::UnmakeMove(std::size_t move)
             case PromotionType::kQueen:
                 board_->black_bishops_ ^= to;
                 board_->black_rooks_ ^= to;
+                board_->RemovePiece(PieceType::kBlackQueens);
                 break;
 
             case PromotionType::kRook:
                 board_->black_rooks_ ^= to;
+                board_->RemovePiece(PieceType::kBlackRooks);
                 break;
 
             case PromotionType::kBishop:
                 board_->black_bishops_ ^= to;
+                board_->RemovePiece(PieceType::kBlackBishops);
                 break;
 
             case PromotionType::kKnight:
                 board_->black_knights_ ^= to;
+                board_->RemovePiece(PieceType::kBlackKnights);
                 break;
             }
 
             board_->black_pawns_ ^= to;
+            board_->AddPiece(PieceType::kBlackPawns);
         }
 
         if(board_->black_pawns_ & to)
@@ -1186,6 +1198,8 @@ void Moves::UnmakeMove(std::size_t move)
             break;
 
         }
+
+        board_->AddPiece(last_move_->captured_);
     }
 
     board_->empty_ = ~board_->occupied_;

@@ -10,7 +10,7 @@
 
 #include "optimization.h"
 
-const int SizeOpt = 388;
+const int SizeOpt = 774;
 
 class Weights
 {
@@ -19,11 +19,11 @@ public:
     {
         std::mt19937_64 rng;
         rng.seed(std::random_device{}());
-        std::uniform_int_distribution dist(-50, 50);
-        std::uniform_int_distribution dist2(-10, 10);
+        std::uniform_int_distribution dist(0, 0);
+        std::uniform_int_distribution dist2(0, 0);
 
         for(std::size_t i = 0; i < kPieceValue.size(); ++i)
-            weights.push_back(kPieceValue[i] + dist(rng));
+            weights.push_back(kPieceValue[i]);
 
         for(std::size_t i = 0; i < kPstWhitePawns.size(); ++i)
             weights.push_back(kPstWhitePawns[i] + dist2(rng));
@@ -42,6 +42,26 @@ public:
 
         for(std::size_t i = 0; i < kPstWhiteKing.size(); ++i)
             weights.push_back(kPstWhiteKing[i] + dist2(rng));
+
+        weights.push_back( kEndGame );
+
+        for(std::size_t i = 0; i < kPstWhitePawnsEnd.size(); ++i)
+            weights.push_back(kPstWhitePawnsEnd[i] + dist2(rng));
+
+        for(std::size_t i = 0; i < kPstWhiteKnightsEnd.size(); ++i)
+            weights.push_back(kPstWhiteKnightsEnd[i] + dist2(rng));
+
+        for(std::size_t i = 0; i < kPstWhiteBishopsEnd.size(); ++i)
+            weights.push_back(kPstWhiteBishopsEnd[i] + dist2(rng));
+
+        for(std::size_t i = 0; i < kPstWhiteRooksEnd.size(); ++i)
+            weights.push_back(kPstWhiteRooksEnd[i] + dist2(rng));
+
+        for(std::size_t i = 0; i < kPstWhiteQueensEnd.size(); ++i)
+            weights.push_back(kPstWhiteQueensEnd[i] + dist2(rng));
+
+        for(std::size_t i = 0; i < kPstWhiteKingEnd.size(); ++i)
+            weights.push_back(kPstWhiteKingEnd[i] + dist2(rng));
     }
 
     std::vector<int> &GetWeights()
@@ -63,6 +83,7 @@ public:
               "Bishop weight: " << weights[2] << std::endl <<
               "Rook weight: " << weights[3] << std::endl <<
               "Queen weight: " << weights[4] << std::endl << std::endl <<
+              "Endgame threshold value: " << weights[389] << std::endl << std::endl <<
               "White pawn pst: " << std::endl;
 
         for(int i = 0; i < 8; ++i)
@@ -197,6 +218,141 @@ public:
 
         ss << std::endl;
 
+        ss << "White pawn pst end: " << std::endl;
+
+  for(int i = 0; i < 8; ++i)
+  {
+      for(int j = 0; j < 8; ++j)
+      {
+          int weight = weights[390 + 8 * i + j];
+
+          if(weight >= 0 && weight < 10)
+              ss << "  ";
+
+          if(weight >= 10)
+              ss << " ";
+
+          if(weight < 0 && weight > -10)
+              ss << " ";
+
+          ss << weight << ", ";
+      }
+      ss << std::endl;
+  }
+
+  ss << "White knight pst end: " << std::endl;
+
+  for(int i = 0; i < 8; ++i)
+  {
+      for(int j = 0; j < 8; ++j)
+      {
+          int weight = weights[454 + 8 * i + j];
+
+          if(weight >= 0 && weight < 10)
+              ss << "  ";
+
+          if(weight >= 10)
+              ss << " ";
+
+          if(weight < 0 && weight > -10)
+              ss << " ";
+
+          ss << weight << ", ";
+      }
+      ss << std::endl;
+  }
+
+  ss << "White bishop pst end: " << std::endl;
+
+  for(int i = 0; i < 8; ++i)
+  {
+      for(int j = 0; j < 8; ++j)
+      {
+          int weight = weights[518 + 8 * i + j];
+
+          if(weight >= 0 && weight < 10)
+              ss << "  ";
+
+          if(weight >= 10)
+              ss << " ";
+
+          if(weight < 0 && weight > -10)
+              ss << " ";
+
+          ss << weight << ", ";
+      }
+      ss << std::endl;
+  }
+
+  ss << "White rook pst end: " << std::endl;
+
+  for(int i = 0; i < 8; ++i)
+  {
+      for(int j = 0; j < 8; ++j)
+      {
+          int weight = weights[582 + 8 * i + j];
+
+          if(weight >= 0 && weight < 10)
+              ss << "  ";
+
+          if(weight >= 10)
+              ss << " ";
+
+          if(weight < 0 && weight > -10)
+              ss << " ";
+
+          ss << weight << ", ";
+      }
+      ss << std::endl;
+  }
+
+  ss << "White queen pst end: " << std::endl;
+
+  for(int i = 0; i < 8; ++i)
+  {
+      for(int j = 0; j < 8; ++j)
+      {
+          int weight = weights[646 + 8 * i + j];
+
+          if(weight >= 0 && weight < 10)
+              ss << "  ";
+
+          if(weight >= 10)
+              ss << " ";
+
+          if(weight < 0 && weight > -10)
+              ss << " ";
+
+          ss << weight << ", ";
+      }
+      ss << std::endl;
+  }
+
+  ss << "White king pst end: " << std::endl;
+
+  for(int i = 0; i < 8; ++i)
+  {
+      for(int j = 0; j < 8; ++j)
+      {
+          int weight = weights[710 + 8 * i + j];
+
+          if(weight >= 0 && weight < 10)
+              ss << "  ";
+
+          if(weight >= 10)
+              ss << " ";
+
+          if(weight < 0 && weight > -10)
+              ss << " ";
+
+          ss << weight << ", ";
+      }
+      ss << std::endl;
+  }
+
+  ss << std::endl;
+
+
         return ss.str();
     }
 private:
@@ -235,6 +391,7 @@ bool eval_solution( const Weights& w, MiddleCost &c)
         ss >> sc;
 
         state.SetFen(fen);
+
         c.cost += std::pow(sc - (state.GetScore(r.GetWeights())/100.0), 2);
 
 //        int result = 0;
@@ -256,8 +413,10 @@ Weights mutate( const Weights& X_base, const std::function<int(void)> &, int)
     std::random_device dev;
     std::mt19937 rng(dev());
 
-    std::uniform_int_distribution<std::mt19937::result_type> dist(0, 4);
+    std::uniform_int_distribution<std::mt19937::result_type> dist(0, 5);
     int idx = dist(rng);
+    if(idx == 5)
+        idx = 389;
 
     int low, high;
 
@@ -326,7 +485,7 @@ Weights mutate( const Weights& X_base, const std::function<int(void)> &, int)
 
     X_new.GetWeights()[idx] = new_weight;
 
-    std::uniform_int_distribution<std::mt19937::result_type> dist12(325, SizeOpt);
+    std::uniform_int_distribution<std::mt19937::result_type> dist12(325, 388);
     idx = dist12(rng);
 
     low = X_new.GetWeights()[idx] - 5;
@@ -334,6 +493,72 @@ Weights mutate( const Weights& X_base, const std::function<int(void)> &, int)
 
     std::uniform_int_distribution<std::mt19937::result_type> dist13(low, high);
     new_weight = dist13(rng);
+
+    X_new.GetWeights()[idx] = new_weight;
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist14(390, 453);
+    idx = dist14(rng);
+
+    low = X_new.GetWeights()[idx] - 5;
+    high = X_new.GetWeights()[idx] + 5;
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist15(low, high);
+    new_weight = dist15(rng);
+
+    X_new.GetWeights()[idx] = new_weight;
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist16(454, 517);
+    idx = dist16(rng);
+
+    low = X_new.GetWeights()[idx] - 5;
+    high = X_new.GetWeights()[idx] + 5;
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist17(low, high);
+    new_weight = dist17(rng);
+
+    X_new.GetWeights()[idx] = new_weight;
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist18(518, 581);
+    idx = dist18(rng);
+
+    low = X_new.GetWeights()[idx] - 5;
+    high = X_new.GetWeights()[idx] + 5;
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist19(low, high);
+    new_weight = dist19(rng);
+
+    X_new.GetWeights()[idx] = new_weight;
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist20(582, 645);
+    idx = dist20(rng);
+
+    low = X_new.GetWeights()[idx] - 5;
+    high = X_new.GetWeights()[idx] + 5;
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist21(low, high);
+    new_weight = dist21(rng);
+
+    X_new.GetWeights()[idx] = new_weight;
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist22(646, 709);
+    idx = dist22(rng);
+
+    low = X_new.GetWeights()[idx] - 5;
+    high = X_new.GetWeights()[idx] + 5;
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist23(low, high);
+    new_weight = dist23(rng);
+
+    X_new.GetWeights()[idx] = new_weight;
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist24(710, SizeOpt - 1);
+    idx = dist24(rng);
+
+    low = X_new.GetWeights()[idx] - 5;
+    high = X_new.GetWeights()[idx] + 5;
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist25(low, high);
+    new_weight = dist25(rng);
 
     X_new.GetWeights()[idx] = new_weight;
 
@@ -347,16 +572,28 @@ Weights crossover( const Weights& X1, const Weights& X2, const std::function<int
     std::random_device dev;
     std::mt19937 rng(dev());
 
-    std::uniform_int_distribution<std::mt19937::result_type> dist(0, 4);
+    std::uniform_int_distribution<std::mt19937::result_type> dist(0, 5);
     int result = dist(rng);
 
     int i;
 
-    for( i = 0; i <= result; ++i )
-        X_new.GetWeights()[i] = X1.GetWeights()[i];
+    if( result < 5)
+    {
+        for( i = 0; i <= result; ++i )
+            X_new.GetWeights()[i] = X1.GetWeights()[i];
 
-    for( ; i <= 4; ++i )
-        X_new.GetWeights()[i] = X2.GetWeights()[i];
+        for( ; i <= 4; ++i )
+            X_new.GetWeights()[i] = X2.GetWeights()[i];
+
+        X_new.GetWeights()[389] = X2.GetWeights()[389];
+    }
+    else
+    {
+        for( i = 0; i <= 4; ++i )
+            X_new.GetWeights()[i] = X1.GetWeights()[i];
+
+        X_new.GetWeights()[389] = X1.GetWeights()[389];
+    }
 
     std::uniform_int_distribution<std::mt19937::result_type> dist1(5, 68);
     result = dist1(rng);
@@ -407,6 +644,60 @@ Weights crossover( const Weights& X1, const Weights& X2, const std::function<int
     result = dist6(rng);
 
     for( i = 325; i <= result; ++i )
+        X_new.GetWeights()[i] = X1.GetWeights()[i];
+
+    for( ; i <= 388; ++i )
+        X_new.GetWeights()[i] = X2.GetWeights()[i];
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist7(390, 453);
+    result = dist7(rng);
+
+    for( i = 390; i <= result; ++i )
+        X_new.GetWeights()[i] = X1.GetWeights()[i];
+
+    for( ; i <= 453; ++i )
+        X_new.GetWeights()[i] = X2.GetWeights()[i];
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist8(454, 517);
+    result = dist8(rng);
+
+    for( i = 454; i <= result; ++i )
+        X_new.GetWeights()[i] = X1.GetWeights()[i];
+
+    for( ; i <= 517; ++i )
+        X_new.GetWeights()[i] = X2.GetWeights()[i];
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist9(518, 581);
+    result = dist9(rng);
+
+    for( i = 518; i <= result; ++i )
+        X_new.GetWeights()[i] = X1.GetWeights()[i];
+
+    for( ; i <= 581; ++i )
+        X_new.GetWeights()[i] = X2.GetWeights()[i];
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist10(582, 645);
+    result = dist10(rng);
+
+    for( i = 582; i <= result; ++i )
+        X_new.GetWeights()[i] = X1.GetWeights()[i];
+
+    for( ; i <= 645; ++i )
+        X_new.GetWeights()[i] = X2.GetWeights()[i];
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist11(646, 709);
+    result = dist11(rng);
+
+    for( i = 646; i <= result; ++i )
+        X_new.GetWeights()[i] = X1.GetWeights()[i];
+
+    for( ; i <= 709; ++i )
+        X_new.GetWeights()[i] = X2.GetWeights()[i];
+
+    std::uniform_int_distribution<std::mt19937::result_type> dist12(710, SizeOpt);
+    result = dist12(rng);
+
+    for( i = 710; i <= result; ++i )
         X_new.GetWeights()[i] = X1.GetWeights()[i];
 
     for( ; i <= SizeOpt; ++i )
@@ -461,7 +752,7 @@ int optimize()
     ga_obj.multi_threading=true;
     ga_obj.idle_delay_us=1; // switch between threads quickly
     ga_obj.verbose=false;
-    ga_obj.population=1000;
+    ga_obj.population=500;
     ga_obj.generation_max=1000;
     ga_obj.calculate_SO_total_fitness=calculate_SO_total_fitness;
     ga_obj.init_genes= init_genes;
@@ -470,7 +761,7 @@ int optimize()
     ga_obj.crossover= crossover;
     ga_obj.SO_report_generation= SO_report_generation;
     ga_obj.best_stall_max=1000;
-    ga_obj.elite_count=125;
+    ga_obj.elite_count=100;
     ga_obj.crossover_fraction=0.66;
     ga_obj.mutation_rate=0.25;
     ga_obj.solve();
