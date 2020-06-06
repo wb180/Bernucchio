@@ -41,9 +41,9 @@ bool Board::SetFen(const std::string &fen_string)
             white_rooks_ = white_king_ = 0;
 
     black_pawns_count = black_knights_count  = black_bishops_count =
-            black_rooks_count  = 0;
+            black_rooks_count  = black_queens_count = 0;
     white_pawns_count = white_knights_count  = white_bishops_count  =
-            white_rooks_count = 0;
+            white_rooks_count = white_queens_count = 0;
 
     for(auto&& symbol : fen_string)
     {
@@ -398,6 +398,25 @@ int Board::totalMaterial() const
             kPieceValue[2] * (black_bishops_count + white_bishops_count) +
             kPieceValue[3] * (black_rooks_count + white_rooks_count) +
             kPieceValue[4] * (black_queens_count + white_queens_count);
+}
+
+int Board::totalMaterial(std::vector<int> &w) const
+{
+    return w[0] * (black_pawns_count + white_pawns_count) +
+            w[1] * (black_knights_count + white_knights_count) +
+            w[2] * (black_bishops_count + white_bishops_count) +
+            w[3] * (black_rooks_count + white_rooks_count) +
+            w[4] * (black_queens_count + white_queens_count);
+}
+
+bool Board::IsKingSolo(Side side) const
+{
+    if( side == Side::kBlack && !black_pawns_count && !black_knights_count && !black_bishops_count && !black_rooks_count && !black_queens_count)
+        return true;
+    else if( side == Side::kWhite && !white_pawns_count && !white_knights_count && !white_bishops_count && !white_rooks_count && !white_queens_count )
+        return true;
+
+    return false;
 }
 
 std::string Board::GetPositionFromBitBoard(const uint64_t &bb) const

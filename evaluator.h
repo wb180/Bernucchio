@@ -12,6 +12,7 @@ public:
 
     int Score();
     int Score(std::vector<int>&);
+    int ScoreMate();
 
 private:
     Board *board_;

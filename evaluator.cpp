@@ -1,8 +1,10 @@
 #include "bits_functions.h"
 #include "constants.h"
 #include "evaluator.h"
+#include "logger.h"
 
 #include <iostream>
+#include <sstream>
 
 Evaluator::Evaluator(Board *board) : board_(board)
 {
@@ -11,100 +13,96 @@ Evaluator::Evaluator(Board *board) : board_(board)
 
 int Evaluator::Score()
 {
+    if(board_->IsKingSolo(Side::kBlack) || board_->IsKingSolo(Side::kWhite))
+        return ScoreMate();
+
     int score = 0;
 
-        double game_stage = static_cast<double>(board_->totalMaterial()) / kEndGame;
-        game_stage = game_stage > 1 ? 1 : game_stage;
+    int game_stage = 100 * board_->totalMaterial() / kEndGame;
+    uint64_t pieces = board_->white_pawns_;
 
-        uint64_t pieces = board_->white_pawns_;
+    while(pieces)
+    {
+        score += kPieceValue[0] + (((100 - game_stage) * kPstWhitePawnsEnd[GetLSBPos(pieces)] + game_stage * kPstWhitePawns[GetLSBPos(pieces)]))/100;
+        pieces &= pieces - 1;
+    }
 
-        while(pieces)
-        {
-            score += kPieceValue[0] + ((1 - game_stage) * kPstWhitePawnsEnd[GetLSBPos(pieces)] + game_stage * kPstWhitePawns[GetLSBPos(pieces)]);
-            pieces &= pieces - 1;
-        }
+    pieces = board_->black_pawns_;
 
-        pieces = board_->black_pawns_;
+    while(pieces)
+    {
+        score -= kPieceValue[0] + (((100 - game_stage) * kPstBlackPawnsEnd[GetLSBPos(pieces)] + game_stage * kPstBlackPawns[GetLSBPos(pieces)]))/100;
+        pieces &= pieces - 1;
+    }
 
-        while(pieces)
-        {
-            score -= kPieceValue[0] + ((1 - game_stage) * kPstBlackPawnsEnd[GetLSBPos(pieces)] + game_stage * kPstBlackPawns[GetLSBPos(pieces)]);
-            pieces &= pieces - 1;
-        }
+    pieces = board_->white_knights_;
 
-        pieces = board_->white_knights_;
+    while(pieces)
+    {
+        score += kPieceValue[1] + (((100 - game_stage) * kPstWhiteKnightsEnd[GetLSBPos(pieces)] + game_stage * kPstWhiteKnights[GetLSBPos(pieces)]))/100;
+        pieces &= pieces - 1;
+    }
 
-        while(pieces)
-        {
-            score += kPieceValue[1] + ((1 - game_stage) * kPstWhiteKnightsEnd[GetLSBPos(pieces)] + game_stage * kPstWhiteKnights[GetLSBPos(pieces)]);
-            pieces &= pieces - 1;
-        }
+    pieces = board_->black_knights_;
 
-        pieces = board_->black_knights_;
+    while(pieces)
+    {
+        score -= kPieceValue[1] + (((100 - game_stage) * kPstBlackKnightsEnd[GetLSBPos(pieces)] + game_stage * kPstBlackKnights[GetLSBPos(pieces)]))/100;
+        pieces &= pieces - 1;
+    }
 
-        while(pieces)
-        {
-            score -= kPieceValue[1] + ((1 - game_stage) * kPstBlackKnightsEnd[GetLSBPos(pieces)] + game_stage * kPstBlackKnights[GetLSBPos(pieces)]);
-            pieces &= pieces - 1;
-        }
+    pieces = board_->white_bishops_ & ~board_->white_rooks_;
 
-        pieces = board_->white_bishops_ & ~board_->white_rooks_;
+    while(pieces)
+    {
+        score += kPieceValue[2] + (((100 - game_stage) * kPstWhiteBishopsEnd[GetLSBPos(pieces)] + game_stage * kPstWhiteBishops[GetLSBPos(pieces)]))/100;
+        pieces &= pieces - 1;
+    }
 
-        while(pieces)
-        {
-            score += kPieceValue[2] + ((1 - game_stage) * kPstWhiteBishopsEnd[GetLSBPos(pieces)] + game_stage * kPstWhiteBishops[GetLSBPos(pieces)]);
-            pieces &= pieces - 1;
-        }
+    pieces = board_->black_bishops_  & ~board_->black_rooks_;
 
-        pieces = board_->black_bishops_  & ~board_->black_rooks_;
+    while(pieces)
+    {
+        score -= kPieceValue[2] + (((100 - game_stage) * kPstBlackBishopsEnd[GetLSBPos(pieces)] + game_stage * kPstBlackBishops[GetLSBPos(pieces)]))/100;
+        pieces &= pieces - 1;
+    }
 
-        while(pieces)
-        {
-            score -= kPieceValue[2] + ((1 - game_stage) * kPstBlackBishopsEnd[GetLSBPos(pieces)] + game_stage * kPstBlackBishops[GetLSBPos(pieces)]);
-            pieces &= pieces - 1;
-        }
+    pieces = board_->white_rooks_ & ~board_->white_bishops_;
 
-        pieces = board_->white_rooks_ & ~board_->white_bishops_;
+    while(pieces)
+    {
+        score += kPieceValue[3] + (((100 - game_stage) * kPstWhiteRooksEnd[GetLSBPos(pieces)] + game_stage * kPstWhiteRooks[GetLSBPos(pieces)]))/100;
+        pieces &= pieces - 1;
+    }
 
-        while(pieces)
-        {
-            score += kPieceValue[3] + ((1 - game_stage) * kPstWhiteRooksEnd[GetLSBPos(pieces)] + game_stage * kPstWhiteRooks[GetLSBPos(pieces)]);
-            pieces &= pieces - 1;
-        }
+    pieces = board_->black_rooks_ & ~board_->black_bishops_;
 
-        pieces = board_->black_rooks_ & ~board_->black_bishops_;
+    while(pieces)
+    {
+        score -= kPieceValue[3] + (((100 - game_stage) * kPstBlackRooksEnd[GetLSBPos(pieces)] + game_stage * kPstBlackRooks[GetLSBPos(pieces)]))/100;
+        pieces &= pieces - 1;
+    }
 
-        while(pieces)
-        {
-            score -= kPieceValue[3] + ((1 - game_stage) * kPstBlackRooksEnd[GetLSBPos(pieces)] + game_stage * kPstBlackRooks[GetLSBPos(pieces)]);
-            pieces &= pieces - 1;
-        }
+    pieces = board_->white_rooks_ & board_->white_bishops_;
 
-        pieces = board_->white_rooks_ & board_->white_bishops_;
+    while(pieces)
+    {
+        score += kPieceValue[4] + (((100 - game_stage) * kPstWhiteQueensEnd[GetLSBPos(pieces)] + game_stage * kPstWhiteQueens[GetLSBPos(pieces)]))/100;
+        pieces &= pieces - 1;
+    }
 
-        while(pieces)
-        {
-            score += kPieceValue[4] + ((1 - game_stage) * kPstWhiteQueensEnd[GetLSBPos(pieces)] + game_stage * kPstWhiteQueens[GetLSBPos(pieces)]);
-            pieces &= pieces - 1;
-        }
+    pieces = board_->black_rooks_ & board_->black_bishops_;
 
-        pieces = board_->black_rooks_ & board_->black_bishops_;
+    while(pieces)
+    {
+        score -= kPieceValue[4] + (((100 - game_stage) * kPstBlackQueensEnd[GetLSBPos(pieces)] + game_stage * kPstBlackQueens[GetLSBPos(pieces)]))/100;
+        pieces &= pieces - 1;
+    }
 
-        while(pieces)
-        {
-            score -= kPieceValue[4] + ((1 - game_stage) * kPstBlackQueensEnd[GetLSBPos(pieces)] + game_stage * kPstBlackQueens[GetLSBPos(pieces)]);
-            pieces &= pieces - 1;
-        }
+    score += (((100 - game_stage) * kPstWhiteKingEnd[GetLSBPos(board_->white_king_)] + game_stage * kPstWhiteKing[GetLSBPos(board_->white_king_)]))/100;
+    score -= (((100 - game_stage) * kPstBlackKingEnd[GetLSBPos(board_->black_king_)] + game_stage * kPstBlackKing[GetLSBPos(board_->black_king_)]))/100;
 
-        score += ((1 - game_stage) * kPstWhiteKingEnd[GetLSBPos(board_->white_king_)] + game_stage * kPstWhiteKing[GetLSBPos(board_->white_king_)]);
-        score -= ((1 - game_stage) * kPstBlackKingEnd[GetLSBPos(board_->black_king_)] + game_stage * kPstBlackKing[GetLSBPos(board_->black_king_)]);
-
-        if(score > 1000)
-        {
-            score *= 0.951245145214;
-        }
-
-        return score;
+    return score;
 }
 
 std::vector<int> flipVector(std::vector<int> vec)
@@ -123,10 +121,10 @@ std::vector<int> flipVector(std::vector<int> vec)
 
 int Evaluator::Score(std::vector<int> &weights)
 {
-    int score = 0;    
+    int score = 0;
 
-    double game_stage = static_cast<double>(board_->totalMaterial()) / weights[389];
-    game_stage = game_stage > 1 ? 1 : game_stage;
+    int threshold = weights[389];
+    int game_stage = 100 * board_->totalMaterial(weights) / threshold;
 
     uint64_t pieces = board_->white_pawns_;
 
@@ -138,7 +136,7 @@ int Evaluator::Score(std::vector<int> &weights)
 
     while(pieces)
     {
-        score += weights[0] + ((1 - game_stage) * whitePawnsPSTEnd[GetLSBPos(pieces)] + game_stage * whitePawnsPST[GetLSBPos(pieces)]);
+        score += weights[0] + (((100 - game_stage) * whitePawnsPSTEnd[GetLSBPos(pieces)] + game_stage * whitePawnsPST[GetLSBPos(pieces)]))/100;
         pieces &= pieces - 1;
     }
 
@@ -146,7 +144,7 @@ int Evaluator::Score(std::vector<int> &weights)
 
     while(pieces)
     {
-        score -= weights[0] + ((1 - game_stage) * blackPawnsPSTEnd[GetLSBPos(pieces)] + game_stage * blackPawnsPST[GetLSBPos(pieces)]);
+        score -= weights[0] + (((100 - game_stage) * blackPawnsPSTEnd[GetLSBPos(pieces)] + game_stage * blackPawnsPST[GetLSBPos(pieces)]))/100;
         pieces &= pieces - 1;
     }
 
@@ -160,7 +158,7 @@ int Evaluator::Score(std::vector<int> &weights)
 
     while(pieces)
     {
-        score += weights[1] + ((1 - game_stage) * whiteKnightPSTEnd[GetLSBPos(pieces)] + game_stage * whiteKnightPST[GetLSBPos(pieces)]);
+        score += weights[1] + (((100 - game_stage) * whiteKnightPSTEnd[GetLSBPos(pieces)] + game_stage * whiteKnightPST[GetLSBPos(pieces)]))/100;
         pieces &= pieces - 1;
     }
 
@@ -168,7 +166,7 @@ int Evaluator::Score(std::vector<int> &weights)
 
     while(pieces)
     {
-        score -= weights[1] + ((1 - game_stage) * blackKnightPSTEnd[GetLSBPos(pieces)] + game_stage * blackKnightPST[GetLSBPos(pieces)]);
+        score -= weights[1] + (((100 - game_stage) * blackKnightPSTEnd[GetLSBPos(pieces)] + game_stage * blackKnightPST[GetLSBPos(pieces)]))/100;
         pieces &= pieces - 1;
     }
 
@@ -182,7 +180,7 @@ int Evaluator::Score(std::vector<int> &weights)
 
     while(pieces)
     {
-        score += weights[2] + ((1 - game_stage) * whiteBishopPSTEnd[GetLSBPos(pieces)] + game_stage * whiteBishopPST[GetLSBPos(pieces)]);
+        score += weights[2] + (((100 - game_stage) * whiteBishopPSTEnd[GetLSBPos(pieces)] + game_stage * whiteBishopPST[GetLSBPos(pieces)]))/100;
         pieces &= pieces - 1;
     }
 
@@ -190,7 +188,7 @@ int Evaluator::Score(std::vector<int> &weights)
 
     while(pieces)
     {
-        score -= weights[2] + ((1 - game_stage) * blackBishopPSTEnd[GetLSBPos(pieces)] + game_stage * blackBishopPST[GetLSBPos(pieces)]);
+        score -= weights[2] + (((100 - game_stage) * blackBishopPSTEnd[GetLSBPos(pieces)] + game_stage * blackBishopPST[GetLSBPos(pieces)]))/100;
         pieces &= pieces - 1;
     }
 
@@ -204,7 +202,7 @@ int Evaluator::Score(std::vector<int> &weights)
 
     while(pieces)
     {
-        score += weights[3] + ((1 - game_stage) * whiteRookPSTEnd[GetLSBPos(pieces)] + game_stage * whiteRookPST[GetLSBPos(pieces)]);
+        score += weights[3] + (((100 - game_stage) * whiteRookPSTEnd[GetLSBPos(pieces)] + game_stage * whiteRookPST[GetLSBPos(pieces)]))/100;
         pieces &= pieces - 1;
     }
 
@@ -212,7 +210,7 @@ int Evaluator::Score(std::vector<int> &weights)
 
     while(pieces)
     {
-        score -= weights[3] + ((1 - game_stage) * blackRookPSTEnd[GetLSBPos(pieces)] + game_stage * blackRookPST[GetLSBPos(pieces)]);
+        score -= weights[3] + (((100 - game_stage) * blackRookPSTEnd[GetLSBPos(pieces)] + game_stage * blackRookPST[GetLSBPos(pieces)]))/100;
         pieces &= pieces - 1;
     }
 
@@ -226,7 +224,7 @@ int Evaluator::Score(std::vector<int> &weights)
 
     while(pieces)
     {
-        score += weights[4] + ((1 - game_stage) * whiteQueenPSTEnd[GetLSBPos(pieces)] + game_stage * whiteQueenPST[GetLSBPos(pieces)]);
+        score += weights[4] + (((100 - game_stage) * whiteQueenPSTEnd[GetLSBPos(pieces)] + game_stage * whiteQueenPST[GetLSBPos(pieces)]))/100;
         pieces &= pieces - 1;
     }
 
@@ -234,7 +232,7 @@ int Evaluator::Score(std::vector<int> &weights)
 
     while(pieces)
     {
-        score -= weights[4] + ((1 - game_stage) * blackQueenPSTEnd[GetLSBPos(pieces)] + game_stage * blackQueenPST[GetLSBPos(pieces)]);
+        score -= weights[4] + (((100 - game_stage) * blackQueenPSTEnd[GetLSBPos(pieces)] + game_stage * blackQueenPST[GetLSBPos(pieces)]))/100;
         pieces &= pieces - 1;
     }
 
@@ -248,7 +246,7 @@ int Evaluator::Score(std::vector<int> &weights)
 
     while(pieces)
     {
-        score += ((1 - game_stage) * whiteKingPSTEnd[GetLSBPos(pieces)] + game_stage * whiteKingPST[GetLSBPos(pieces)]);
+        score += (((100 - game_stage) * whiteKingPSTEnd[GetLSBPos(pieces)] + game_stage * whiteKingPST[GetLSBPos(pieces)]))/100;
         pieces &= pieces - 1;
     }
 
@@ -256,9 +254,128 @@ int Evaluator::Score(std::vector<int> &weights)
 
     while(pieces)
     {
-        score -= ((1 - game_stage) * blackKingPSTEnd[GetLSBPos(pieces)] + game_stage * blackKingPST[GetLSBPos(pieces)]);
+        score -= (((100 - game_stage) * blackKingPSTEnd[GetLSBPos(pieces)] + game_stage * blackKingPST[GetLSBPos(pieces)]))/100;
         pieces &= pieces - 1;
     }
+
+    return score;
+}
+
+int Evaluator::ScoreMate()
+{
+    int score = 0;
+    uint64_t pieces = board_->white_pawns_;
+
+    while(pieces)
+    {
+        score += kPieceValue[0];
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->black_pawns_;
+
+    while(pieces)
+    {
+        score -= kPieceValue[0];
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->white_knights_;
+
+    while(pieces)
+    {
+        score += kPieceValue[1];
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->black_knights_;
+
+    while(pieces)
+    {
+        score -= kPieceValue[1];
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->white_bishops_ & ~board_->white_rooks_;
+
+    while(pieces)
+    {
+        score += kPieceValue[2];
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->black_bishops_  & ~board_->black_rooks_;
+
+    while(pieces)
+    {
+        score -= kPieceValue[2];
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->white_rooks_ & ~board_->white_bishops_;
+
+    while(pieces)
+    {
+        score += kPieceValue[3];
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->black_rooks_ & ~board_->black_bishops_;
+
+    while(pieces)
+    {
+        score -= kPieceValue[3];
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->white_rooks_ & board_->white_bishops_;
+
+    while(pieces)
+    {
+        score += kPieceValue[4];
+        pieces &= pieces - 1;
+    }
+
+    pieces = board_->black_rooks_ & board_->black_bishops_;
+
+    while(pieces)
+    {
+        score -= kPieceValue[4];
+        pieces &= pieces - 1;
+    }
+
+    if(board_->IsKingSolo(Side::kBlack))
+    {
+        //int square = GetLSBPos(board_->black_king_);
+        score += kKingMate[GetLSBPos(board_->white_king_)][GetLSBPos(board_->black_king_)];
+        score -= kKingMated[GetLSBPos(board_->black_king_)];
+
+//        pieces = board_->white_knights_ & board_->white_bishops_ & board_->white_rooks_;
+
+//        while(pieces)
+//        {
+//            score += kKingMate[GetLSBPos(pieces)][GetLSBPos(board_->black_king_)];
+//            pieces &= pieces - 1;
+//        }
+    }
+    else
+    {
+        score -= kKingMate[GetLSBPos(board_->black_king_)][GetLSBPos(board_->white_king_)];
+        score += kKingMated[GetLSBPos(board_->white_king_)];
+
+//        pieces = board_->black_knights_ & board_->black_bishops_ & board_->black_rooks_;
+
+//        while(pieces)
+//        {
+//            score -= kKingMate[GetLSBPos(pieces)][GetLSBPos(board_->white_king_)];
+//            pieces &= pieces - 1;
+//        }
+    }
+
+//    Logger::GetInstance() << *board_;
+//    std::stringstream ss;
+//    ss << score;
+//    Logger::GetInstance() << ss.str();
 
     return score;
 }

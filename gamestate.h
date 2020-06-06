@@ -51,6 +51,11 @@ public:
         return evaluator_.Score(w);
     }
 
+    bool IsMateSituation()
+    {
+        return board_.IsKingSolo(Side::kBlack) || board_.IsKingSolo(Side::kWhite);
+    }
+
 private:
     Board board_;
     Moves moves_;

@@ -392,7 +392,8 @@ bool eval_solution( const Weights& w, MiddleCost &c)
 
         state.SetFen(fen);
 
-        c.cost += std::pow(sc - (state.GetScore(r.GetWeights())/100.0), 2);
+        if(!state.IsMateSituation())
+            c.cost += std::pow(sc - (state.GetScore(r.GetWeights())/100.0), 2);
 
 //        int result = 0;
 //        std::for_each(r.GetWeights().begin() + 5, r.GetWeights().end(), [&result](const int &s){result += std::pow(s,2);});
@@ -415,6 +416,7 @@ Weights mutate( const Weights& X_base, const std::function<int(void)> &, int)
 
     std::uniform_int_distribution<std::mt19937::result_type> dist(0, 5);
     int idx = dist(rng);
+
     if(idx == 5)
         idx = 389;
 
@@ -753,7 +755,7 @@ int optimize()
     ga_obj.idle_delay_us=1; // switch between threads quickly
     ga_obj.verbose=false;
     ga_obj.population=500;
-    ga_obj.generation_max=1000;
+    ga_obj.generation_max=2000;
     ga_obj.calculate_SO_total_fitness=calculate_SO_total_fitness;
     ga_obj.init_genes= init_genes;
     ga_obj.eval_solution= eval_solution;
@@ -762,8 +764,8 @@ int optimize()
     ga_obj.SO_report_generation= SO_report_generation;
     ga_obj.best_stall_max=1000;
     ga_obj.elite_count=100;
-    ga_obj.crossover_fraction=0.66;
-    ga_obj.mutation_rate=0.25;
+    ga_obj.crossover_fraction=0.75;
+    ga_obj.mutation_rate=0.33;
     ga_obj.solve();
 
     std::cout<<"The problem is optimized in "<<timer.toc()<<" seconds."<<std::endl;

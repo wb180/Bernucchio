@@ -4,6 +4,7 @@
 #include "constants.h"
 
 #include <string>
+#include <vector>
 
 class Board
 {
@@ -38,6 +39,9 @@ public:
     bool IsEnPassantPossible(Side side, uint64_t bb) const;
 
     int totalMaterial() const;
+    int totalMaterial(std::vector<int>&) const;
+
+    bool IsKingSolo(Side side) const;
 
 private:
 
