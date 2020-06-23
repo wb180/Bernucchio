@@ -1,6 +1,7 @@
 #include "timemanager.h"
 
 #include <iostream>
+#include <cmath>
 
 TimeManager::TimeManager()
 {
@@ -53,7 +54,12 @@ void TimeManager::CalculateTime()
     }
     else
     {
-        move_time = static_cast<uint64_t>(our_time_ / 25 + 0.6 * our_increment_);
+        if(our_time_ > 926)
+            move_time = std::pow(our_time_, 2)/(5*our_time_ + 26000);
+        else
+            move_time = std::pow(our_time_, 2)/(32*our_time_ + 1000);
+
+        move_time = move_time ? move_time : 1;
     }
 
     start_time_ = std::chrono::steady_clock::now();
