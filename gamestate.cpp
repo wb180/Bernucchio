@@ -459,6 +459,7 @@ int GameState::AlphaBeta(std::size_t depth, int alpha, int beta, std::size_t *pv
         {
             if(moves_.MakeMove(move->move_))
             {
+                local_pv_line = {};
                 is_exist = true;
 
                 if(current_depth_ == 1 && depth == 1)
