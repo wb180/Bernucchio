@@ -85,6 +85,8 @@ void HashList::UpdateHash(const uint64_t &move, MoveInfo* move_info, const uint6
         std::size_t en_passant_target = GetLSBPos(move_info->old_en_passant_);
         hash ^= pieces_hashes_[move_info->captured_][hash_type == PieceType::kWhitePawns ? en_passant_target - kMoveForward : en_passant_target + kMoveForward];
     }
+    else if(move_info->old_en_passant_)
+        hash ^= en_passant_hashes_[(move_info->old_en_passant_ * kHashEnPassantMagic) >> kBitShift16];
 
     if((move & MoveMasks::kFlag) == MoveFlags::kPromotion)
     {
