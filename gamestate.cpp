@@ -161,6 +161,7 @@ bool GameState::MakeMove(const std::string &move_string)
         if(moves_.MakeMove(move))
         {
             hashes_.UpdateHash(move, moves_.GetLastMoveInfo(), en_passant_, castlings_);
+
             return true;
         }
     }
@@ -588,19 +589,19 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
     int score;
 
     auto time_start = std::chrono::steady_clock::now();
-    found_any_move_ = false;
+    found_any_move_ = false;    
 
-    if( !found_any_move_ && false/*use_book*/ )
+    /*if( !found_any_move_ )
     {
         Signature signature;
         getSignature(&signature);
         Move move;
-        if( CTGReader::GetInstance("Perfect2019").GetMove(this, &signature, &move) )
+        if( CTGReader::GetInstance("/home/dartsplayer/.wine/drive_c/Games/ChessBase/Books/TestBook").GetMove(this, &signature, &move) )
         {
             best_move = move.move_;
             found_any_move_ = true;
         }
-    }
+    }*/
 
     if(!found_any_move_)
         for(std::size_t iterative_depth = 0; iterative_depth <= depth; ++iterative_depth)
@@ -910,11 +911,7 @@ void append_bits_reverse(uint8_t *buf, uint8_t bits, int bit_position, int num_b
 
 bool GameState::ByteToMove(uint8_t byte, Move *move)
 {
-    const char* piece_code =
-        "PNxQPQPxQBKxPBRNxxBKPBxxPxQBxBxxxRBQPxBPQQNxxPBQNQBxNxNQQQBQBxxx"
-        "xQQxKQxxxxPQNQxxRxRxBPxxxxxxPxxPxQPQxxBKxRBxxxRQxxBxQxxxxBRRPRQR"
-        "QRPxxNRRxxNPKxQQxxQxQxPKRRQPxQxBQxQPxRxxxRxQxRQxQPBxxRxQxBxPQQKx"
-        "xBBBRRQPPQBPBRxPxPNNxxxQRQNPxxPKNRxRxQPQRNxPPQQRQQxNRBxNQQQQxQQx";
+    const char piece_code[] = "PNxQPQPxQBKxPBRNxxBKPBxxPxQBxBxxxRBQPxBPQQNxxPBQNQBxNxNQQQBQBxxxxQQxKQxxxxPQNQxxRxRxBPxxxxxxPxxPxQPQxxBKxRBxxxRQxxBxQxxxxBRRPRQRQRPxxNRRxxNPKxQQxxQxQxPKRRQPxQxBQxQPxRxxxRxQxRQxQPBxxRxQxBxPQQKxxBBBRRQPPQBPBRxPxPNNxxxQRQNPxxPKNRxRxQPQRNxPPQQRQQxNRBxNQQQQxQQx";
 
     const int piece_index[256] =
     {
@@ -1007,7 +1004,7 @@ bool GameState::ByteToMove(uint8_t byte, Move *move)
         case 'P': !flip_board ? pc = PieceType::kWhitePawns : pc = PieceType::kBlackPawns; break;
         case 'N': !flip_board ? pc = PieceType::kWhiteKnights : pc = PieceType::kBlackKnights; break;
         case 'B': !flip_board ? pc = PieceType::kWhiteBishops : pc = PieceType::kBlackBishops; break;
-        case 'R': !flip_board ? pc = PieceType::kWhiteRooks : pc = PieceType::kBlackBishops; break;
+        case 'R': !flip_board ? pc = PieceType::kWhiteRooks : pc = PieceType::kBlackRooks; break;
         case 'Q': !flip_board ? pc = PieceType::kWhiteQueens : pc = PieceType::kBlackQueens; break;
         case 'K': !flip_board ? pc = PieceType::kWhiteKing : pc = PieceType::kBlackKing; break;
         default:;

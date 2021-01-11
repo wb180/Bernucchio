@@ -69,9 +69,9 @@ Logger &Logger::operator<<(const Board &board)
 
     std::transform(std::begin(board_pieces), std::end(board_pieces), std::begin(board_pieces), [board, idx = static_cast<std::size_t>(0)](const auto &) mutable
     {
+        char result = board.GetPieceSymbolAtPosition(idx);
         ++idx;
-
-        return board.GetPieceSymbolAtPosition(idx);
+        return result;
     } );
 
     for(std::size_t row = 0; row < kBoardSize; ++row)

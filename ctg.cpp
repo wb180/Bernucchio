@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <random>
+#include <sstream>
 
 #define read_24(buf, pos)   \
     ((buf[pos]<<16) + (buf[(pos)+1]<<8) + (buf[(pos)+2]))
@@ -101,7 +102,10 @@ bool CTGReader::GetEntry(int page_index, Signature *signature, Entry *entry)
 {
     // Pages are a uniform 4096 bytes.
     uint8_t buf[4096];
-    ctg_input_->seekg(4096*(page_index + 1));
+
+    uint64_t idx = 4096*(static_cast<uint64_t>(page_index) + 1);
+
+    ctg_input_->seekg(idx);
 
     if (!ctg_input_->read((char*)buf, 4096))
         return false;
@@ -240,10 +244,7 @@ bool CTGReader::PickMove(GameState *state, Entry *entry, Move *move)
         uint8_t byte = entry->moves[i];
         if( state->ByteToMove(byte, &moves[i/2]) )
         {
-            weights[i/2] = MoveWeight(state, moves[i/2], entry->moves[i+1], &recommended[i/2]);/*
-
-            Logger::GetInstance().PrintMove(moves[i/2].move_);
-            Logger::GetInstance() << "/n";*/
+            weights[i/2] = MoveWeight(state, moves[i/2], entry->moves[i+1], &recommended[i/2]);
 
             if (recommended[i/2])
                 have_recommendations = true;
@@ -264,8 +265,13 @@ bool CTGReader::PickMove(GameState *state, Entry *entry, Move *move)
     if (total_weight == 0)
         return false;
 
+    int64_t nw = total_weight + 50;
+
     std::mt19937_64 rng;
     rng.seed(std::random_device{}());
+
+    if(int64_t(rng() % nw) > total_weight)
+        return false;
 
     int64_t choice = rng() % total_weight;
     int64_t i;
@@ -296,7 +302,7 @@ int64_t CTGReader::MoveWeight(GameState *state, Move move, uint8_t annotation, b
             *recommended = false;
             int64_t half_points = 2*entry.wins + entry.draws;
             int64_t games = entry.wins + entry.draws + entry.losses;
-            weight = (games < 1) ? 0 : (half_points * 10000) / games;
+            weight = (games < 3) ? 0 : half_points * half_points / games;
             if (entry.recommendation == 64) weight = 0;
             if (entry.recommendation == 128) *recommended = true;
 
@@ -315,14 +321,6 @@ int64_t CTGReader::MoveWeight(GameState *state, Move move, uint8_t annotation, b
         }
 
         state->GetMoves()->UnmakeMove(move.move_);
-
-        std::string fen_after = state->GetFen();
-
-        if( fen_before != fen_after )
-        {
-            Logger::GetInstance().PrintMove(move.move_);
-            Logger::GetInstance() << fen_before << " " << fen_after;
-        }
     }
 
     return weight;

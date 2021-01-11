@@ -108,11 +108,6 @@ bool Board::SetFen(const std::string &fen_string)
         empty_ = ~occupied_;
     }
 
-//    std::cout << black_pawns_ << std::endl;
-
-//    Logger lg;
-//    lg << black_pawns_;
-
     return result;
 }
 
