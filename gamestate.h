@@ -56,6 +56,9 @@ public:
         return board_.IsKingSolo(Side::kBlack) || board_.IsKingSolo(Side::kWhite);
     }
 
+    bool useBook() const;
+    void setUseBook(bool newUseBook);
+
 private:
     Board board_;
     Moves moves_;
@@ -81,6 +84,8 @@ private:
     uint64_t nodes;
     std::size_t moves_in_root_;
     std::size_t current_depth_;
+
+    bool mUseBook = false;
 
 private:
     bool is_en_passant_possible();

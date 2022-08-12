@@ -2,6 +2,7 @@
 
 #include "gamestate.h"
 #include "evaluator.h"
+#include "pst.h"
 
 #include <random>
 #include <vector>

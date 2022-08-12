@@ -37,7 +37,7 @@ class CTGReader
 public:    
     ~CTGReader();
 
-    static CTGReader& GetInstance(std::string name)
+    static CTGReader& GetInstance(std::string name = "")
     {
         static CTGReader reader{ name };
         return reader;

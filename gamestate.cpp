@@ -114,9 +114,9 @@ bool GameState::SetFen(const std::string &fen_string)
         }
         else
             result = false;
-    }
 
-    hashes_.ComputeInitialHash(en_passant_, castlings_, active_side_);
+        hashes_.ComputeInitialHash(en_passant_, castlings_, active_side_);
+    }
 
     return result;
 }
@@ -589,19 +589,19 @@ void GameState::Search(std::size_t depth, std::atomic<bool> *stop)
     int score;
 
     auto time_start = std::chrono::steady_clock::now();
-    found_any_move_ = false;    
+    found_any_move_ = false;
 
-    /*if( !found_any_move_ )
+    if( mUseBook && !found_any_move_ )
     {
         Signature signature;
         getSignature(&signature);
         Move move;
-        if( CTGReader::GetInstance("/home/dartsplayer/.wine/drive_c/Games/ChessBase/Books/TestBook").GetMove(this, &signature, &move) )
+        if( CTGReader::GetInstance().GetMove(this, &signature, &move) )
         {
             best_move = move.move_;
             found_any_move_ = true;
         }
-    }*/
+    }
 
     if(!found_any_move_)
         for(std::size_t iterative_depth = 0; iterative_depth <= depth; ++iterative_depth)
@@ -1063,4 +1063,14 @@ bool GameState::ByteToMove(uint8_t byte, Move *move)
     }
 
     return true;
+}
+
+bool GameState::useBook() const
+{
+    return mUseBook;
+}
+
+void GameState::setUseBook(bool newUseBook)
+{
+    mUseBook = newUseBook;
 }

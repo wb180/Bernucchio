@@ -1,59 +1,91 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
+cmake_minimum_required(VERSION 3.12)
 
-PROJECT(Bernucchio)
+project(Bernucchio VERSION 1.0)
 
-SET(CMAKE_CXX_STANDARD 17)
-SET(CMAKE_INCLUDE_CURRENT_DIR ON)
-SET(GCC_BUILTIN_POPCOUNT_COMPILE_FLAGS "-mpopcnt")
-SET(GCC_BUILTIN_CTZLL ON)
-SET(BUILD_OPTION_WITH_TESTS OFF)
-#SET(MINGW_COMPILE_FLAGS "-static-libgcc -static-libstdc++ -static -lpthread")
+set(CMAKE_CXX_STANDARD 20)
 
-IF(GCC_BUILTIN_POPCOUNT_COMPILE_FLAGS)
-  SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_BUILTIN_POPCOUNT_COMPILE_FLAGS}")
-  ADD_COMPILE_DEFINITIONS(BUILD_WITH_POPCOUNT)
-  MESSAGE(STATUS "build with popcount")
-ELSE()
-  MESSAGE(STATUS "build without popcount")
-ENDIF()
+set(BUILTIN_CTZLL ON)
+set(BUILTIN_SSE_4_2 ON)
+set(BUILTIN_POPCOUNT ON)
+set(BUILD_WITH_TESTS ON)
+set(INSTALL_GTEST OFF)
 
-IF(GCC_BUILTIN_CTZLL)
-  ADD_COMPILE_DEFINITIONS(BUILD_WITH_CTZLL)
-  MESSAGE(STATUS "build with ctzll")
-ELSE()
-  MESSAGE(STATUS "build without ctzll")
-ENDIF()
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 
-if(BUILD_OPTION_WITH_TESTS)
-  ADD_COMPILE_DEFINITIONS(BUILD_WITH_TESTS)
-  SET(SOURCES tests/fen.cpp tests/hash.cpp tests/perft.cpp)
-  SET(LIBS gtest)
-  MESSAGE(STATUS "build with tests")
-ELSE()
-  MESSAGE(STATUS "build without tests")
-ENDIF()
+add_compile_definitions(BUILTIN_CTZLL)
 
-IF(MINGW)
-    SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${MINGW_COMPILE_FLAGS}")
-ENDIF()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # using Clang
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_definitions(GCC_COMPILER)
+    if(BUILTIN_SSE_4_2)
+        add_compile_options(-msse4.2)
+    elseif(BUILTIN_POPCOUNT)
+        add_compile_options(-mpopcnt)
+    endif()
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  # using Intel C++
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  add_compile_definitions(MSVC_COMPILER)  
+  if(BUILTIN_SSE_4_2)
+      add_compile_definitions(MSVC_SSE_4_2)
+  elseif(BUILTIN_POPCOUNT)
+      add_compile_definitions(MSVC_POPCOUNT)      
+  endif()
+  set(CMAKE_CXX_FLAGS_RELEASE "/O2")
+endif()
 
-SET(SOURCES ${SOURCES} main.cpp board.cpp logger.cpp moves.cpp gamestate.cpp movelist.cpp hashlist.cpp magics.cpp uci.cpp timemanager.cpp search.cpp evaluator.cpp ctg.cpp optimization.cpp)
-SET(HEADERS bits_functions.h board.h logger.h constants.h moves.h gamestate.h movelist.h hashlist.h magics.hpp moveinfo.h uci.h timemanager.h search.h evaluator.h move.h ctg.h openga.hpp optimization.h)
-SET(OTHER readme.md)
+set(HEADERS
+    bits_functions.h
+    board.h
+    logger.h
+    constants.h
+    moves.h
+    gamestate.h
+    movelist.h
+    hashlist.h
+    magics.hpp
+    moveinfo.h
+    uci.h
+    timemanager.h
+    search.h
+    evaluator.h
+    move.h
+    ctg.h
+    openga.hpp
+    optimization.h
+    pst.h)
 
-SET(LIBS ${LIBS} pthread)
+set(SOURCES main.cpp
+    board.cpp
+    logger.cpp
+    moves.cpp
+    gamestate.cpp
+    movelist.cpp
+    hashlist.cpp
+    magics.cpp
+    uci.cpp
+    timemanager.cpp
+    search.cpp
+    evaluator.cpp
+    ctg.cpp
+    optimization.cpp)
 
-EXECUTE_PROCESS(
+set(OTHER readme.md)
+
+execute_process(
   COMMAND git log "-1" "--pretty=format:%ad %h" "--date=format:%Y-%m-%d"
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE GIT_VERSION
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-ADD_DEFINITIONS(-DGIT_VERSION="${GIT_VERSION}")
-
-#ADD_CUSTOM_TARGET(INVALIDATE_FILES ALL
-#                  COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/uci.cpp)
+add_definitions(-DGIT_VERSION="${GIT_VERSION}")
+add_definitions(-DVERSION_MAJOR="${PROJECT_VERSION_MAJOR}")
+add_definitions(-DVERSION_MINOR="${PROJECT_VERSION_MINOR}")
 
 configure_file(
   ${CMAKE_SOURCE_DIR}/version.h.in
@@ -62,5 +94,9 @@ configure_file(
 
 include_directories(${CMAKE_BINARY_DIR}/generated)
 
-ADD_EXECUTABLE(${PROJECT_NAME} ${SOURCES} ${HEADERS})
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${LIBS})
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+target_link_libraries(${PROJECT_NAME} ${LIBS})
+
+if(BUILD_WITH_TESTS)
+    add_subdirectory(test)
+endif()

@@ -1,6 +1,6 @@
-#include "gamestate.h"
+#include "gtest/gtest.h"
 
-#include <gtest/gtest.h>
+#include "../gamestate.h"
 
 bool IsFensEqual(std::string fen_1, std::string fen_2)
 {

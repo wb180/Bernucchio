@@ -44,6 +44,7 @@ void HashList::ComputeInitialHash(const uint64_t &en_passant, const std::size_t 
     {
         type = GetHashType(GetLSBPos(occupied));
         lsb = GetLSBPos(occupied);
+
         hash ^= pieces_hashes_[type][lsb];
         occupied &= occupied - 1;
     }

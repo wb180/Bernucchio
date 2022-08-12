@@ -30,6 +30,8 @@ public:
         return gamestate_.GetScore(w);
     }
 
+    void setBook();
+
     ~Search();
     void Wake();
     void Wait();
@@ -47,7 +49,7 @@ private:
 
     std::condition_variable condition_variable_;
     std::thread thread_;
-    std::mutex mutex_;    
+    std::mutex mutex_;
 
     GameState gamestate_;
 };

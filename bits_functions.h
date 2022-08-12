@@ -1,7 +1,15 @@
 #ifndef BITS_FUNCTIONS_H
 #define BITS_FUNCTIONS_H
 
+#include <cstddef>
 #include <cstdint>
+
+#ifdef MSVC_COMPILER
+    #include <intrin.h>
+    #if defined(MSVC_SSE_4_2)
+        #include <nmmintrin.h>
+    #endif            
+#endif
 
 inline uint64_t GetBitSet(std::size_t i)
 {
@@ -22,11 +30,17 @@ const std::size_t index64[64] =
 
 inline std::size_t GetLSBPos(uint64_t bb)
 {
-#ifdef BUILD_WITH_CTZLL
-    return static_cast<std::size_t>(__builtin_ctzll(bb));
-#else
-   return index64[((bb ^ (bb-1)) * 0x03f79d71b4cb0a89) >> 58];
-#endif
+    #if defined(BUILTIN_CTZLL)
+        #if defined(GCC_COMPILER)
+            return static_cast<std::size_t>(__builtin_ctzll(bb));
+        #elif defined(MSVC_COMPILER)
+            unsigned long r = 0;
+            _BitScanForward64(&r, bb);
+            return static_cast<std::size_t>(r);
+        #endif
+    #else
+       return index64[((bb ^ (bb-1)) * 0x03f79d71b4cb0a89) >> 58];
+    #endif
 }
 
 inline uint64_t GetLSB(uint64_t bb)
@@ -47,14 +61,20 @@ inline std::size_t GetMSBPos(uint64_t bb)
 
 inline std::size_t GetBitsCount(uint64_t bb)
 {
-#ifdef BUILD_WITH_POPCOUNT
-    return  static_cast<std::size_t>(__builtin_popcountll(bb));
-#else
-    bb = bb - ((bb >> 1) & 0X5555555555555555);
-    bb = (bb & 0X3333333333333333) + ((bb >> 2) & 0X3333333333333333);
-    bb = (bb + (bb >> 4)) & 0XF0F0F0F0F0F0F0F;
-    return (bb * 0X101010101010101) >> 56;
-#endif
+    #if defined(GCC_COMPILER)
+        return  static_cast<std::size_t>(__builtin_popcountll(bb));
+    #elif defined(MSVC_COMPILER)
+        #if defined(MSVC_SSE_4_2)
+            return static_cast<std::size_t>(_mm_popcnt_u64(bb));
+        #elif defined(MSVC_POPCOUNT)
+            return static_cast<std::size_t>(__popcnt64(bb));
+        #endif
+    #else
+        bb = bb - ((bb >> 1) & 0X5555555555555555);
+        bb = (bb & 0X3333333333333333) + ((bb >> 2) & 0X3333333333333333);
+        bb = (bb + (bb >> 4)) & 0XF0F0F0F0F0F0F0F;
+        return (bb * 0X101010101010101) >> 56;
+    #endif
 }
 
 inline uint64_t GetBitMaskNextPermutation(uint64_t permutation, uint64_t mask)
@@ -76,7 +96,33 @@ inline uint64_t GetBitMaskNextPermutation(uint64_t permutation, uint64_t mask)
 
 inline uint64_t FlipBitboardVertically(uint64_t bb)
 {
-    return __builtin_bswap64(bb);
+    #if defined(GCC_COMPILER)
+        return __builtin_bswap64(bb);
+    #elif defined(MSVC_COMPILER)
+        return _byteswap_uint64(bb);
+    #else
+        bb = (bb & 0x00000000FFFFFFFF) << 32 | (bb & 0xFFFFFFFF00000000) >> 32;
+        bb = (bb & 0x0000FFFF0000FFFF) << 16 | (bb & 0xFFFF0000FFFF0000) >> 16;
+        bb = (bb & 0x00FF00FF00FF00FF) << 8  | (bb & 0xFF00FF00FF00FF00) >> 8;
+
+        return bb;
+    #endif
+}
+
+inline uint64_t Flip32bitsVertically(uint32_t bb)
+{
+    #if defined(GCC_COMPILER)
+        return __builtin_bswap32(bb);
+    #elif defined(MSVC_COMPILER)
+        return _byteswap_uint32(bb);
+    #else
+        uint32_t y = (x >> 24) & 0xff;
+        y |= ((x >> 16) & 0xff) << 8;
+        y |= ((x >> 8) & 0xff) << 16;
+        y |= (x & 0xff) << 24;
+
+        return y;
+    #endif
 }
 
 inline uint64_t FlipBitboardHorizontally(uint64_t bb)

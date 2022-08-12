@@ -1,3 +1,4 @@
+#include "bits_functions.h"
 #include "ctg.h"
 #include "logger.h"
 
@@ -56,8 +57,8 @@ CTGReader::CTGReader(std::string name) : name_(name)
 
         ctb_input_->read((char*)&bounds_, 12);
 
-        bounds_.low = __builtin_bswap32(bounds_.low);
-        bounds_.high = __builtin_bswap32(bounds_.high);
+        bounds_.low = Flip32bitsVertically(bounds_.low);
+        bounds_.high = Flip32bitsVertically(bounds_.high);
     }
 }
 
@@ -174,7 +175,7 @@ int CTGReader::GetPageIndex(int32_t hash)
         {
             cto_input_->seekg(16 + key*4);
             cto_input_->read((char*)&page_index, 4);
-            page_index = __builtin_bswap32(page_index);
+            page_index = Flip32bitsVertically(page_index);
 
             if(page_index >= 0)
                 break;

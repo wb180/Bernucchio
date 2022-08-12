@@ -1,6 +1,5 @@
-#include "gamestate.h"
-
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
+#include "../gamestate.h"
 
 TEST(PerftTest, IllegalEnPassantCapture)
 {

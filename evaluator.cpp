@@ -2,6 +2,7 @@
 #include "constants.h"
 #include "evaluator.h"
 #include "logger.h"
+#include "pst.h"
 
 #include <iostream>
 #include <sstream>

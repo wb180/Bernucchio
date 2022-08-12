@@ -6,7 +6,6 @@
 #include "version.h"
 
 #include <fstream>
-
 #include <sstream>
 
 const std::string kUci = "uci";
@@ -27,6 +26,8 @@ const std::string kInfinite = "infinite";
 const std::string kStop = "stop";
 const std::string kSpeedTest = "speedtest";
 const std::string kMoveTime = "movetime";
+const std::string kSetOption = "setoption";
+const std::string kCTGBookPath = "CTGBookPath";
 
 UCI::UCI()
 {
@@ -54,9 +55,11 @@ void UCI::Loop()
         {
             std::ostringstream ss;
 
-            ss << "id name Bernucchio " << GIT_VERSION << std::endl
-                      << "id author WirBrauchen180" << std::endl
-                      << "uciok" << std::endl;
+            ss << "id name Bernucchio "
+               <<  VERSION_MAJOR << "." << VERSION_MINOR << " (" << (GIT_VERSION) << ")" << std::endl
+               << "id author " << "wb180" << std::endl
+               << "option name " << kCTGBookPath << " type string default <empty>" << std::endl
+               << "uciok" << std::endl;
 
             std::cout << ss.str();
             std::flush(std::cout);
@@ -170,7 +173,15 @@ void UCI::Loop()
             GameState s;
             s.SpeedPerft();
         }
+        else if(token == kSetOption)
+        {
+            ss >> token;
+            if(token == kCTGBookPath)
+            {
+                ss >> token;
+                CTGReader::GetInstance(token);
+            }
+        }
     }
-
 //    myfile.close();
 }
