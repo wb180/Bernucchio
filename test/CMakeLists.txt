@@ -17,7 +17,9 @@ set(SOURCES fen.cpp
             ../search.cpp
             ../evaluator.cpp
             ../ctg.cpp
-            ../optimization.cpp)
+            ../optimization.cpp
+            ../ucicommand.cpp
+            ../ucioption.cpp)
 
 set(gtest_force_shared_crt on)
 add_subdirectory(googletest)

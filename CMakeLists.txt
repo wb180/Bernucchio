@@ -67,7 +67,9 @@ set(HEADERS
     ctg.h
     openga.hpp
     optimization.h
-    pst.h)
+    pst.h
+    ucicommand.h
+    ucioption.h)
 
 set(SOURCES main.cpp
     board.cpp
@@ -82,7 +84,9 @@ set(SOURCES main.cpp
     search.cpp
     evaluator.cpp
     ctg.cpp
-    optimization.cpp)
+    optimization.cpp
+    ucicommand.cpp
+    ucioption.cpp)
 
 set(OTHER readme.md)
 
