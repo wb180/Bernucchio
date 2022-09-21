@@ -1,6 +1,5 @@
 #include "bits_functions.h"
 #include "constants.h"
-#include "logger.h"
 #include "moves.h"
 
 #include <stack>

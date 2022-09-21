@@ -2,8 +2,6 @@
 #include "constants.h"
 #include "movelist.h"
 
-#include "logger.h"
-
 #include <algorithm>
 
 MoveList::MoveList()

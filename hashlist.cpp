@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <random>
 #include <iostream>
-#include <stack>
-#include "logger.h"
 
 HashList::HashList(const Board *board) : board_(board)
 {

@@ -51,7 +51,6 @@ endif()
 set(HEADERS
     bits_functions.h
     board.h
-    logger.h
     constants.h
     moves.h
     gamestate.h
@@ -73,7 +72,6 @@ set(HEADERS
 
 set(SOURCES main.cpp
     board.cpp
-    logger.cpp
     moves.cpp
     gamestate.cpp
     movelist.cpp

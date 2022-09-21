@@ -6,7 +6,6 @@ set(SOURCES fen.cpp
             perft.cpp
             main.cpp
             ../board.cpp
-            ../logger.cpp
             ../moves.cpp
             ../gamestate.cpp
             ../movelist.cpp

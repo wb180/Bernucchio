@@ -2,7 +2,6 @@
 #include "constants.h"
 #include "ctg.h"
 #include "gamestate.h"
-#include "logger.h"
 #include "timemanager.h"
 
 #include <iostream>

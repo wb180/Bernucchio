@@ -1,7 +1,6 @@
 #include "bits_functions.h"
 #include "board.h"
 #include "constants.h"
-#include "logger.h"
 
 #include <algorithm>
 #include <bitset>

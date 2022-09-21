@@ -1,7 +1,6 @@
 #include "bits_functions.h"
 #include "constants.h"
 #include "evaluator.h"
-#include "logger.h"
 #include "pst.h"
 
 #include <iostream>
@@ -347,36 +346,14 @@ int Evaluator::ScoreMate()
 
     if(board_->IsKingSolo(Side::kBlack))
     {
-        //int square = GetLSBPos(board_->black_king_);
         score += kKingMate[GetLSBPos(board_->white_king_)][GetLSBPos(board_->black_king_)];
         score -= kKingMated[GetLSBPos(board_->black_king_)];
-
-//        pieces = board_->white_knights_ & board_->white_bishops_ & board_->white_rooks_;
-
-//        while(pieces)
-//        {
-//            score += kKingMate[GetLSBPos(pieces)][GetLSBPos(board_->black_king_)];
-//            pieces &= pieces - 1;
-//        }
     }
     else
     {
         score -= kKingMate[GetLSBPos(board_->black_king_)][GetLSBPos(board_->white_king_)];
         score += kKingMated[GetLSBPos(board_->white_king_)];
-
-//        pieces = board_->black_knights_ & board_->black_bishops_ & board_->black_rooks_;
-
-//        while(pieces)
-//        {
-//            score -= kKingMate[GetLSBPos(pieces)][GetLSBPos(board_->white_king_)];
-//            pieces &= pieces - 1;
-//        }
     }
-
-//    Logger::GetInstance() << *board_;
-//    std::stringstream ss;
-//    ss << score;
-//    Logger::GetInstance() << ss.str();
 
     return score;
 }
