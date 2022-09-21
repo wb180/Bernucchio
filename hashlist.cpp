@@ -5,6 +5,8 @@
 #include <random>
 #include <iostream>
 
+#include "moveinfo.h"
+
 HashList::HashList(const Board *board) : board_(board)
 {
     std::mt19937_64 rng;
